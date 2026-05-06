@@ -1,11 +1,11 @@
 import os
 import subprocess
-from fospx_kernel_mgr.core.grub_backup import GrubBackupManager
+from puls_kernel_mgr.core.grub_backup import GrubBackupManager
 
 class GrubManager:
     def __init__(self):
         self.grub_default_path = "/etc/default/grub"
-        self.custom_script_path = "/etc/grub.d/15_fospx_kernels"
+        self.custom_script_path = "/etc/grub.d/15_puls_kernels"
         self.backup = GrubBackupManager()
         
     def read_default_config(self):
@@ -86,7 +86,7 @@ class GrubManager:
     def generate_custom_entry(self):
         script_content = """#!/bin/sh
 exec tail -n +3 $0
-# This file provides an easy way to add custom menu entries for fospx-kernel-mgr.
+# This file provides an easy way to add custom menu entries for puls-kernel-mgr.
 # It searches for installed kernels and adds them to the main menu.
 
 if [ -f /etc/os-release ]; then

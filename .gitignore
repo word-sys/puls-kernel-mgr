@@ -31,10 +31,10 @@ MANIFEST
 *.tar.gz
 .debhelper/
 debian/.debhelper/
-debian/fospx-kernel-mgr/
-debian/fospx-kernel-mgr.substvars
-debian/fospx-kernel-mgr.postinst.debhelper
-debian/fospx-kernel-mgr.prerm.debhelper
+debian/puls-kernel-mgr/
+debian/puls-kernel-mgr.substvars
+debian/puls-kernel-mgr.postinst.debhelper
+debian/puls-kernel-mgr.prerm.debhelper
 debian/files
 debian/*.log
 obj-*-linux-gnu/

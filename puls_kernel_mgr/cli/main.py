@@ -1,7 +1,7 @@
 import sys
 import curses
-from fospx_kernel_mgr.core.grub import GrubManager
-from fospx_kernel_mgr.core.kernel import KernelManager
+from puls_kernel_mgr.core.grub import GrubManager
+from puls_kernel_mgr.core.kernel import KernelManager
 
 def interactive_menu(stdscr, title, options, context_dict=None):
     curses.curs_set(0)
@@ -66,10 +66,10 @@ def interactive_menu(stdscr, title, options, context_dict=None):
             return current_row
 
 def curses_main(stdscr):
-    from fospx_kernel_mgr.core.grub import GrubManager
-    from fospx_kernel_mgr.core.kernel import KernelManager
-    from fospx_kernel_mgr.core.safety import SafetyManager
-    from fospx_kernel_mgr.core.security import SecurityManager
+    from puls_kernel_mgr.core.grub import GrubManager
+    from puls_kernel_mgr.core.kernel import KernelManager
+    from puls_kernel_mgr.core.safety import SafetyManager
+    from puls_kernel_mgr.core.security import SecurityManager
     import subprocess, os, sys
     
     while True:
@@ -106,18 +106,18 @@ def curses_main(stdscr):
             0: kernels_context,
             1: grub_context,
             2: safety_context,
-            3: "View FOSPX Kernel Manager\nVersion and License information.",
+            3: "View PULS Kernel Manager\nVersion and License information.",
             4: "Exit application."
         }
         
-        choice = interactive_menu(stdscr, "=== FOSPX Kernel Manager ===", main_options, context_dict)
+        choice = interactive_menu(stdscr, "=== PULS Kernel Manager ===", main_options, context_dict)
         
         if choice == 4:
             break
         elif choice == 3:
             about_opts = ["Back"]
             title = "--- About ---"
-            about_context = "FOSPX Kernel/GRUB Manager\nVersion: 0.1.0\n\nDeveloper: Barın Güzeldemirci\nContact: baringuzeldemir@gmail.com\n\nLicense: GPL-3.0-or-later\nThis program is free software."
+            about_context = "PULS Kernel/GRUB Manager\nVersion: 0.1.0\n\nDeveloper: Barın Güzeldemirci\nContact: baringuzeldemir@gmail.com\n\nLicense: GPL-3.0-or-later\nThis program is free software."
             interactive_menu(stdscr, title, about_opts, {0: about_context})
         elif choice == 2:
             while True:
@@ -128,26 +128,26 @@ def curses_main(stdscr):
                 elif s_choice == 0:
                     curses.endwin()
                     print("Installing dependencies...")
-                    subprocess.run(["sudo", sys.executable, "-c", "from fospx_kernel_mgr.core.safety import SafetyManager; SafetyManager().install_dependencies()"])
+                    subprocess.run(["sudo", sys.executable, "-c", "from puls_kernel_mgr.core.safety import SafetyManager; SafetyManager().install_dependencies()"])
                     input("Press Enter to continue...")
                     stdscr.clear()
                 elif s_choice == 1:
                     curses.endwin()
                     print("Creating snapshot...")
-                    subprocess.run(["sudo", sys.executable, "-c", "from fospx_kernel_mgr.core.safety import SafetyManager; sm=SafetyManager(); _,msg=sm.create_snapshot(); print(msg)"])
+                    subprocess.run(["sudo", sys.executable, "-c", "from puls_kernel_mgr.core.safety import SafetyManager; sm=SafetyManager(); _,msg=sm.create_snapshot(); print(msg)"])
                     input("Press Enter to continue...")
                     stdscr.clear()
                 elif s_choice == 2:
                     curses.endwin()
                     print("Generating MOK...")
-                    subprocess.run(["sudo", sys.executable, "-c", "from fospx_kernel_mgr.core.security import SecurityManager; sm=SecurityManager(); _,msg=sm.generate_mok(); print(msg)"])
+                    subprocess.run(["sudo", sys.executable, "-c", "from puls_kernel_mgr.core.security import SecurityManager; sm=SecurityManager(); _,msg=sm.generate_mok(); print(msg)"])
                     input("Press Enter to continue...")
                     stdscr.clear()
                 elif s_choice == 3:
                     curses.endwin()
                     import getpass
                     pw = getpass.getpass("Enter new MOK password: ")
-                    subprocess.run(["sudo", sys.executable, "-c", f"from fospx_kernel_mgr.core.security import SecurityManager; sm=SecurityManager(); _,msg=sm.enroll_mok('{pw}'); print(msg)"])
+                    subprocess.run(["sudo", sys.executable, "-c", f"from puls_kernel_mgr.core.security import SecurityManager; sm=SecurityManager(); _,msg=sm.enroll_mok('{pw}'); print(msg)"])
                     input("Press Enter to continue...")
                     stdscr.clear()
                 elif s_choice == 4:
@@ -286,7 +286,7 @@ def curses_main(stdscr):
                         cmd = ["sudo", sys.executable, "-c", f"""
 import sys
 sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))}')
-from fospx_kernel_mgr.core.kernel import KernelManager
+from puls_kernel_mgr.core.kernel import KernelManager
 KernelManager().compile_and_install({vdict_repr}, use_menuconfig={use_menuconfig})
 """]
                         subprocess.run(cmd)
@@ -295,7 +295,7 @@ KernelManager().compile_and_install({vdict_repr}, use_menuconfig={use_menuconfig
                             g_cmd = ["sudo", sys.executable, "-c", f"""
 import sys
 sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))}')
-from fospx_kernel_mgr.core.grub import GrubManager
+from puls_kernel_mgr.core.grub import GrubManager
 GrubManager().set_kernel_next_boot("Advanced options for Debian GNU/Linux>Debian GNU/Linux, with Linux {version_str}")
 """]
                             subprocess.run(g_cmd)
@@ -310,7 +310,7 @@ GrubManager().set_kernel_next_boot("Advanced options for Debian GNU/Linux>Debian
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="FOSPX Kernel Manager CLI")
+    parser = argparse.ArgumentParser(description="PULS Kernel Manager CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
     snap_parser = subparsers.add_parser("snapshot", help="Manage snapshots")
     snap_sub = snap_parser.add_subparsers(dest="snap_cmd")
@@ -337,35 +337,35 @@ def main():
             print("Exiting.")
             sys.exit(0)
             
-        print("\nLaunching FOSPX Kernel/GRUB Manager...")
+        print("\nLaunching PULS Kernel/GRUB Manager...")
         curses.wrapper(curses_main)
         sys.exit(0)
             
     if args.command == "snapshot":
         if getattr(args, 'snap_cmd', None) != "create":
-            print("Usage: fospx-kernel-mgr snapshot create")
+            print("Usage: puls-kernel-mgr snapshot create")
             sys.exit(1)
-        from fospx_kernel_mgr.core.safety import SafetyManager
+        from puls_kernel_mgr.core.safety import SafetyManager
         manager = SafetyManager()
         success, msg = manager.create_snapshot()
         print(msg)
         sys.exit(0 if success else 1)
         
     elif args.command == "analyze-panic":
-        from fospx_kernel_mgr.core.safety import SafetyManager
+        from puls_kernel_mgr.core.safety import SafetyManager
         manager = SafetyManager()
         print(manager.analyze_panic())
         sys.exit(0)
         
     elif args.command == "generate-mok":
-        from fospx_kernel_mgr.core.security import SecurityManager
+        from puls_kernel_mgr.core.security import SecurityManager
         manager = SecurityManager()
         success, msg = manager.generate_mok()
         print(msg)
         sys.exit(0 if success else 1)
         
     elif args.command == "enroll-mok":
-        from fospx_kernel_mgr.core.security import SecurityManager
+        from puls_kernel_mgr.core.security import SecurityManager
         manager = SecurityManager()
         success, msg = manager.enroll_mok(args.password)
         print(msg)

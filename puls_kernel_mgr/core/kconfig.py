@@ -41,6 +41,6 @@ class KconfigManager:
         env["SOURCE_DATE_EPOCH"] = str(int(now.timestamp()))
         env["KBUILD_BUILD_TIMESTAMP"] = now.strftime("%Y-%m-%dT%H:%M:%S")
         
-        env["KBUILD_BUILD_USER"] = "fospx"
+        env["KBUILD_BUILD_USER"] = "puls"
         env["KBUILD_BUILD_HOST"] = "builder"
         return env

@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fospx-kernel-mgr"
+name = "puls-kernel-mgr"
 version = "0.1.1"
 description = "Linux Custom Kernel/GRUB Manager"
 authors = [
@@ -19,5 +19,5 @@ dependencies = [
 ]
 
 [project.scripts]
-fospx-kernel-mgr = "fospx_kernel_mgr.cli.main:main"
-fospx-kernel-mgr-gtk = "fospx_kernel_mgr.gui.main:main"
+puls-kernel-mgr = "puls_kernel_mgr.cli.main:main"
+puls-kernel-mgr-gtk = "puls_kernel_mgr.gui.main:main"

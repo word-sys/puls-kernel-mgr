@@ -147,6 +147,10 @@ class KernelManager:
             pgp_url = version.get("pgp")
             version = version.get("version")
             
+        from puls_kernel_mgr.core.safety import SafetyManager
+        print("Verifying and installing build dependencies...")
+        SafetyManager().install_dependencies()
+
         src_dir = self.download_and_extract(version, source_url, pgp_url)
         
         print(f"Configuring tailored kernel {version} using localmodconfig...")
@@ -162,7 +166,7 @@ class KernelManager:
         subprocess.run(["scripts/config", "--disable", "DEBUG_INFO_BTF"], cwd=src_dir, check=True)
         subprocess.run(["scripts/config", "--disable", "MODULE_SIG_KEY"], cwd=src_dir, check=True)
         
-        from fospx_kernel_mgr.core.kconfig import KconfigManager
+        from puls_kernel_mgr.core.kconfig import KconfigManager
         kconf = KconfigManager(src_dir)
         if use_menuconfig:
             print("Launching make menuconfig in external terminal...")

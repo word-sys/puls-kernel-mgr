@@ -5,7 +5,7 @@ from datetime import datetime
 
 class GrubBackupManager:
     def __init__(self):
-        self.backup_dir = "/var/backups/fospx-grub"
+        self.backup_dir = "/var/backups/puls-grub"
         self.default_grub = "/etc/default/grub"
         self.grub_d = "/etc/grub.d"
         

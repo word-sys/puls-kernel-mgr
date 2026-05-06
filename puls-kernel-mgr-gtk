@@ -3,13 +3,13 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-from fospx_kernel_mgr.core.os_detect import is_gtk4_supported
+from puls_kernel_mgr.core.os_detect import is_gtk4_supported
 
 if __name__ == "__main__":
     if not is_gtk4_supported():
         print("Error: GTK4 is not supported on this OS version (requires Ubuntu 22+ or Debian 12+).")
-        print("Please use the CLI version by running: fospx-kernel-mgr")
+        print("Please use the CLI version by running: puls-kernel-mgr")
         sys.exit(1)
         
-    from fospx_kernel_mgr.gui.main import main
+    from puls_kernel_mgr.gui.main import main
     main()

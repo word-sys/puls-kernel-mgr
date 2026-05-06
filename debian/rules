@@ -1,4 +1,4 @@
 #!/usr/bin/make -f
-export PYBUILD_NAME=fospx_kernel_mgr
+export PYBUILD_NAME=puls_kernel_mgr
 %:
 	dh $@ --with python3 --buildsystem=pybuild

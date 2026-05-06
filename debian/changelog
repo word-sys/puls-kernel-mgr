@@ -1,14 +1,15 @@
-fospx-kernel-mgr (0.1.1) bullseye; urgency=medium
+puls-kernel-mgr (0.1.1) bullseye; urgency=medium
 
   * Inital pre-release 2. Testing phase 2
   * Fixed missing certificates and btf errors
   * Fixed modules not being loaded
   * Now we currently using localmodconfig to build kernel
+  * Project rebranded from "FOSPX" to "PULS" and it will be like this from now on.
   * There is still some issues with kernel menu, sometimes it fetches 2 times that same kernel series shows 2 times but this doesnt happens on all OS's for example Debian 12 has this issue but Debian 13 doesnt has and manin development point is now Debian 13 so this bug will be ignored for some time.
 
  -- Barın Güzeldemirci <baringuzeldemir@gmail.com>  Thu, 30 Apr 2026 01:29:00 +0300
 
-fospx-kernel-mgr (0.1.0) bullseye; urgency=medium
+puls-kernel-mgr (0.1.0) bullseye; urgency=medium
 
   * Initial pre-release 1. Testing phase 1
 

@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: FOSPX Kernel/GRUB Manager
-Source: https://github.com/fospx-org/fospx-kernel-mgr
+Upstream-Name: PULS Kernel/GRUB Manager
+Source: https://github.com/puls-org/puls-kernel-mgr
 
 Files: *
 Copyright: 2026 Barın Güzeldemirci <baringuzeldemir@gmail.com>

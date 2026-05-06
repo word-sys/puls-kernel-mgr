@@ -1,14 +1,14 @@
-Source: fospx-kernel-mgr
+Source: puls-kernel-mgr
 Section: admin
 Priority: optional
 Maintainer: Barın Güzeldemirci <baringuzeldemir@gmail.com>
 Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools
 Standards-Version: 4.6.2
-Homepage: https://github.com/fospx-org/fospx-kernel-mgr
+Homepage: https://github.com/puls-org/puls-kernel-mgr
 
-Package: fospx-kernel-mgr
+Package: puls-kernel-mgr
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}, python3-gi, gir1.2-adw-1, pkexec, timeshift, mokutil, grub2-common, tar, wget
-Description: FOSPX Kernel Manager
+Description: PULS Kernel Manager
  Bootloader and custom kernel management tool.
  Created for advanced OS control and management.

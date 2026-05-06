@@ -1,1 +1,2 @@
-debian/fospx-kernel-mgr.desktop usr/share/applications/
+debian/puls-kernel-mgr.desktop usr/share/applications/
+puls-k_icon.svg usr/share/icons/hicolor/scalable/apps/

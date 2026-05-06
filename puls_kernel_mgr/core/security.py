@@ -7,7 +7,7 @@ class SecurityManager:
         self.priv_key = os.path.join(self.mok_dir, "MOK.priv")
         self.der_key = os.path.join(self.mok_dir, "MOK.der")
         
-    def generate_mok(self, common_name="FOSPX Custom Kernel Key"):
+    def generate_mok(self, common_name="PULS Custom Kernel Key"):
         if os.geteuid() != 0:
             return False, "Root privileges required to generate MOK."
         if not os.path.exists(self.mok_dir):
@@ -27,7 +27,7 @@ string_mask = utf8only
 x509_extensions = myexts
 
 [ req_distinguished_name ]
-O = FOSPX
+O = PULS
 CN = {common_name}
 emailAddress = admin@localhost
 

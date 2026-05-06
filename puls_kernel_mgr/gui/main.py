@@ -5,11 +5,11 @@ import subprocess
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Adw, Gio, GLib
-from fospx_kernel_mgr.core.kernel import KernelManager
-from fospx_kernel_mgr.core.grub import GrubManager
-from fospx_kernel_mgr.core.safety import SafetyManager
-from fospx_kernel_mgr.core.security import SecurityManager
+from gi.repository import Gtk, Adw, Gio, GLib, Gdk
+from puls_kernel_mgr.core.kernel import KernelManager
+from puls_kernel_mgr.core.grub import GrubManager
+from puls_kernel_mgr.core.safety import SafetyManager
+from puls_kernel_mgr.core.security import SecurityManager
 
 
 class LiveLogDialog(Adw.Window):
@@ -19,7 +19,6 @@ class LiveLogDialog(Adw.Window):
         self.set_default_size(720, 480)
         self.set_modal(True)
         self.set_transient_for(parent)
-        # Adw.ToolbarView requires ≥1.4
         header = Adw.HeaderBar()
         self._status_label = Gtk.Label(label="Running…")
         self._status_label.add_css_class("dim-label")
@@ -73,8 +72,11 @@ class LiveLogDialog(Adw.Window):
 class KernelManagerWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.set_title("FOSPX Kernel/GRUB Manager")
+        self.set_title("PULS Kernel/GRUB Manager")
         self.set_default_size(1000, 750)
+        
+        self.root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.icon_path = os.path.join(self.root_dir, "puls-k_icon.svg")
         
         style_mgr = Adw.StyleManager.get_default()
         style_mgr.set_color_scheme(Adw.ColorScheme.DEFAULT)
@@ -87,6 +89,17 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.view_stack = Adw.ViewStack()
         self.view_stack.set_vexpand(True)
         self.header = Adw.HeaderBar()
+        
+        brand_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        brand_box.set_margin_start(10)
+        brand_icon = Gtk.Image.new_from_file(self.icon_path)
+        brand_icon.set_pixel_size(32)
+        brand_label = Gtk.Label(label="PULS Kernel/GRUB Manager")
+        brand_label.add_css_class("heading")
+        brand_box.append(brand_icon)
+        brand_box.append(brand_label)
+        self.header.pack_start(brand_box)
+
         self.switcher = Adw.ViewSwitcher()
         self.switcher.set_stack(self.view_stack)
         self.switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
@@ -115,13 +128,15 @@ class KernelManagerWindow(Adw.ApplicationWindow):
             app.add_action(action)
             
     def show_about_dialog(self, action, param):
+        logo_paintable = Gdk.Texture.new_from_filename(self.icon_path)
         dialog = Gtk.AboutDialog(
             transient_for=self,
-            program_name="FOSPX Kernel/GRUB Manager",
+            program_name="PULS Kernel/GRUB Manager",
             version="0.1.1",
+            logo=logo_paintable,
             license_type=Gtk.License.GPL_3_0_ONLY,
             comments="A bootloader and custom kernel management tool\nCreated for advanced OS control.",
-            authors=["Barın Güzeldemirci [FOSPX]"]
+            authors=["Barın Güzeldemirci"]
         )
         dialog.present()
 
@@ -481,7 +496,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
             GLib.idle_add(btn.set_sensitive, True)
             GLib.idle_add(btn.set_label, "Install Now")
         self._run_privileged_action(
-            "from fospx_kernel_mgr.core.safety import SafetyManager; SafetyManager().install_dependencies()",
+            "from puls_kernel_mgr.core.safety import SafetyManager; SafetyManager().install_dependencies()",
             "Dependencies installed successfully.",
             dialog_title="Installing Dependencies",
             on_done=_reenable,
@@ -489,7 +504,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
 
     def on_create_snapshot(self, btn):
         self._run_privileged_action(
-            "from fospx_kernel_mgr.core.safety import SafetyManager; SafetyManager().create_snapshot()",
+            "from puls_kernel_mgr.core.safety import SafetyManager; SafetyManager().create_snapshot()",
             "Timeshift snapshot created successfully.",
             dialog_title="Creating Timeshift Snapshot",
         )
@@ -500,7 +515,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
 
     def on_generate_mok(self, btn):
         self._run_privileged_action(
-            "from fospx_kernel_mgr.core.security import SecurityManager; SecurityManager().generate_mok()",
+            "from puls_kernel_mgr.core.security import SecurityManager; SecurityManager().generate_mok()",
             "MOK Generated in /var/lib/shim-signed/mok",
             dialog_title="Generate Machine Owner Key",
         )
@@ -511,7 +526,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
             self.show_message("Error", "Please provide an enrollment password.")
             return
         self._run_privileged_action(
-            f"from fospx_kernel_mgr.core.security import SecurityManager; SecurityManager().enroll_mok('{pw}')",
+            f"from puls_kernel_mgr.core.security import SecurityManager; SecurityManager().enroll_mok('{pw}')",
             "MOK Enrollment request submitted. Please reboot.",
             dialog_title="Enroll Machine Owner Key",
         )
@@ -541,7 +556,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
             
         cfg_repr = repr(config)
         self._run_privileged_action(
-            f"from fospx_kernel_mgr.core.grub import GrubManager; m=GrubManager(); m.write_advanced_config({cfg_repr})",
+            f"from puls_kernel_mgr.core.grub import GrubManager; m=GrubManager(); m.write_advanced_config({cfg_repr})",
             "GRUB configuration saved and updated successfully.",
             dialog_title="Applying GRUB Configuration",
         )
@@ -550,7 +565,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         vdict_repr = repr(version)
         v_str = version.get('version', '')
         self._run_privileged_action(
-            f"from fospx_kernel_mgr.core.kernel import KernelManager; KernelManager().compile_and_install({vdict_repr}, use_menuconfig=False)",
+            f"from puls_kernel_mgr.core.kernel import KernelManager; KernelManager().compile_and_install({vdict_repr}, use_menuconfig=False)",
             f"Kernel {v_str} compiled and installed successfully! Check Boot Manager to set it as default.",
             dialog_title=f"Compiling & Installing Linux {v_str}",
         )
@@ -584,14 +599,15 @@ class KernelManagerWindow(Adw.ApplicationWindow):
 
 class KernelManagerApp(Adw.Application):
     def __init__(self, **kwargs):
-        super().__init__(application_id='com.fospx.kernelmgr', **kwargs)
+        super().__init__(application_id='com.puls.kernelmgr', **kwargs)
+        Gtk.Window.set_default_icon_name("puls-k_icon")
         
     def do_activate(self):
         self.show_pre_launch_warning()
 
     def show_pre_launch_warning(self):
         win = Adw.ApplicationWindow(application=self)
-        win.set_title("FOSPX Kernel Manager - Security Warning")
+        win.set_title("PULS Kernel Manager - Security Warning")
         win.set_default_size(450, 250)
         
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
@@ -626,5 +642,7 @@ class KernelManagerApp(Adw.Application):
         win.present()
 
 def main():
+    GLib.set_application_name("PULS Kernel/GRUB Manager")
+    GLib.set_prgname("com.puls.kernelmgr")
     app = KernelManagerApp()
     app.run(sys.argv)
