@@ -8,7 +8,7 @@ _"2 Days ago, when i was trying to use Debian 12 on a modern Acer system, i find
 
 PULS Kernel/GRUB Manager is a specialized tool for Linux users who need fine-grained control over their system's heart and boot process. It simplifies the process of fetching, compiling, and installing mainline kernels while ensuring system safety through snapshots and Secure Boot management. Its still in heavy development so expect bugs.
 
-![PULS Kernel Manager Screenshot](https://raw.githubusercontent.com/word-sys/puls-kernel-mgr/main/screenshots/screenshot.png)
+![PULS Kernel Manager Screenshot](https://raw.githubusercontent.com/word-sys/puls-kernel-mgr/main/screenshots/screenshot1.png)
 
 ## Features
 
