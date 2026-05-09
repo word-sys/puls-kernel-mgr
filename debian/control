@@ -8,7 +8,38 @@ Homepage: https://github.com/word-sys/puls-kernel-mgr
 
 Package: puls-kernel-mgr
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, python3-gi, gir1.2-adw-1, pkexec, timeshift, mokutil, grub2-common, tar, wget
-Description: PULS Kernel Manager
- Bootloader and custom kernel management tool.
- Created for advanced OS control and management.
+Depends: ${misc:Depends}, ${python3:Depends},
+ python3-gi,
+ python3-requests,
+ python3-bs4,
+ gir1.2-adw-1,
+ gir1.2-gtk-4.0,
+ pkexec,
+ grub2-common,
+ grub-common,
+ tar,
+ wget,
+ xz-utils,
+ gpg,
+ openssl,
+ mokutil,
+ dkms,
+ desktop-file-utils,
+ librsvg2-common
+Recommends: timeshift, btrfs-progs, kdump-tools
+Description: PULS Kernel/GRUB Manager
+ A powerful tool for Linux users who need fine-grained control over their
+ system's kernel and boot process. Simplifies fetching, compiling, and
+ installing mainline kernels while ensuring system safety through snapshots
+ and Secure Boot management.
+ .
+ Features:
+  - Mainline kernel fetching from kernel.org with GPG verification
+  - Tailored compilation using localmodconfig
+  - Automatic DKMS rebuild for modules (e.g. NVIDIA drivers)
+  - GRUB parameter tuning and boot order management
+  - Timestamped GRUB config backups with dry-run validation
+  - Integrated Timeshift snapshot support
+  - Machine Owner Key (MOK) management for Secure Boot
+  - Kernel panic log analysis from pstore and kdump
+  - Dashboard overview with system status

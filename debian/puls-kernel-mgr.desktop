@@ -1,8 +1,10 @@
 [Desktop Entry]
 Name=PULS Kernel/GRUB Manager
-Comment=Professional Bootloader and Kernel Utility
+Comment=Professional Bootloader and Kernel Management Tool
 Exec=puls-kernel-mgr-gtk
 Icon=puls-k_icon
 Terminal=false
 Type=Application
 Categories=System;Settings;
+StartupWMClass=puls-kernel-mgr
+Keywords=kernel;grub;boot;linux;compile;bootloader;secure;mok;

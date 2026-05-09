@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "puls-kernel-mgr"
-version = "0.1.1"
+version = "0.2.0"
 description = "Linux Custom Kernel/GRUB Manager"
 authors = [
     {name = "Barın Güzeldemirci", email = "baringuzeldemir@gmail.com"}
@@ -13,11 +13,18 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "requests",
-    "beautifulsoup4", 
-    "simple-term-menu", 
-    "rich", 
+    "beautifulsoup4",
+    "simple-term-menu",
+    "rich",
 ]
+
+[project.urls]
+Homepage = "https://github.com/word-sys/puls-kernel-mgr"
+"Bug Tracker" = "https://github.com/word-sys/puls-kernel-mgr/issues"
 
 [project.scripts]
 puls-kernel-mgr = "puls_kernel_mgr.cli.main:main"
 puls-kernel-mgr-gtk = "puls_kernel_mgr.gui.main:main"
+
+[tool.setuptools.package-data]
+"puls_kernel_mgr" = ["*.svg"]

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.puls.kernelmgr</id>
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <name>PULS Kernel/GRUB Manager</name>
+  <summary>Professional bootloader and mainline kernel management tool</summary>
+
+  <description>
+    <p>
+      PULS Kernel/GRUB Manager is a specialized tool for Linux users who need
+      fine-grained control over their system's kernel and boot process. It simplifies
+      the process of fetching, compiling, and installing mainline kernels while
+      ensuring system safety through snapshots and Secure Boot management.
+    </p>
+    <p>Features include:</p>
+    <ul>
+      <li>Mainline kernel fetching from kernel.org with GPG signature verification</li>
+      <li>Tailored compilation using localmodconfig for lean, hardware-specific kernels</li>
+      <li>Automatic DKMS rebuild for third-party modules (e.g. NVIDIA drivers)</li>
+      <li>GRUB parameter tuning and visual boot order management</li>
+      <li>Timestamped GRUB configuration backups with dry-run validation</li>
+      <li>Integrated Timeshift snapshot support before kernel changes</li>
+      <li>Machine Owner Key (MOK) management for UEFI Secure Boot</li>
+      <li>Kernel panic log analysis from pstore and kdump</li>
+      <li>Dashboard overview: running kernel, GRUB default, /boot disk usage</li>
+      <li>Kernel removal with protection against removing the running kernel</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">puls-kernel-mgr.desktop</launchable>
+
+  <url type="homepage">https://github.com/word-sys/puls-kernel-mgr</url>
+  <url type="bugtracker">https://github.com/word-sys/puls-kernel-mgr/issues</url>
+
+  <developer id="com.github.word-sys">
+    <name>Barın Güzeldemirci</name>
+  </developer>
+
+  <provides>
+    <binary>puls-kernel-mgr</binary>
+    <binary>puls-kernel-mgr-gtk</binary>
+  </provides>
+
+  <categories>
+    <category>System</category>
+    <category>Settings</category>
+  </categories>
+
+  <keywords>
+    <keyword>kernel</keyword>
+    <keyword>grub</keyword>
+    <keyword>boot</keyword>
+    <keyword>linux</keyword>
+    <keyword>compile</keyword>
+    <keyword>secure boot</keyword>
+    <keyword>mok</keyword>
+  </keywords>
+
+  <requires>
+    <display_length compare="ge">900</display_length>
+  </requires>
+
+  <releases>
+    <release version="0.2.0" date="2026-05-09">
+      <description>
+        <p>Major feature and stability release:</p>
+        <ul>
+          <li>Fixed GNOME taskbar showing app ID instead of name</li>
+          <li>Fixed icon not loading when installed as a .deb package</li>
+          <li>Fixed security vulnerability in MOK password handling</li>
+          <li>Added Dashboard page with system overview cards</li>
+          <li>Added kernel removal with running-kernel protection</li>
+          <li>Added menuconfig toggle in GUI</li>
+          <li>Added Boot Once (grub-reboot) button</li>
+          <li>Added GRUB backup history viewer with per-entry restore</li>
+          <li>Added per-package dependency status display</li>
+          <li>Added streaming download progress in log dialog</li>
+          <li>Added /boot disk space check before compilation</li>
+          <li>GRUB backup rotation (keeps last 10)</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.1" date="2026-04-30">
+      <description>
+        <p>Second pre-release testing phase. Fixed certificate and module loading issues.</p>
+      </description>
+    </release>
+    <release version="0.1.0" date="2026-04-29">
+      <description>
+        <p>Initial pre-release.</p>
+      </description>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+</component>

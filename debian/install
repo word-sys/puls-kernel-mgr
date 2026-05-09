@@ -1,2 +1,3 @@
 debian/puls-kernel-mgr.desktop usr/share/applications/
 puls-k_icon.svg usr/share/icons/hicolor/scalable/apps/
+debian/com.puls.kernelmgr.metainfo.xml usr/share/metainfo/

@@ -4,73 +4,110 @@
 
 # PULS Kernel/GRUB Manager
 
-_"2 Days ago, when i was trying to use Debian 12 on a modern Acer system, i find out that kernel comes with it doesn't has Acer fan controller patch inside, installing kernel from bookworm-backports stopped me at 6.12.xx so why we shouldn't go further..."_ That was the main idea while creating this.
+> _"2 Days ago, when I was trying to use Debian 12 on a modern Acer system, I found out that the kernel it comes with doesn't have an Acer fan controller patch inside. Installing a kernel from bookworm-backports stopped me at 6.12.xx — so why shouldn't we go further?"_
 
-PULS Kernel/GRUB Manager is a specialized tool for Linux users who need fine-grained control over their system's heart and boot process. It simplifies the process of fetching, compiling, and installing mainline kernels while ensuring system safety through snapshots and Secure Boot management. Its still in heavy development so expect bugs.
+PULS Kernel/GRUB Manager is a specialized tool for Linux users who need fine-grained control over their system's kernel and boot process. It simplifies fetching, compiling, and installing mainline kernels while ensuring system safety through snapshots and Secure Boot management.
 
-![PULS Kernel Manager Screenshot](https://raw.githubusercontent.com/word-sys/puls-kernel-mgr/main/screenshots/screenshot1.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/word-sys/puls-kernel-mgr/main/screenshots/ss0.png" width="49%">
+  <img src="https://raw.githubusercontent.com/word-sys/puls-kernel-mgr/main/screenshots/ss1.png" width="49%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/word-sys/puls-kernel-mgr/main/screenshots/ss2.png" width="49%">
+  <img src="https://raw.githubusercontent.com/word-sys/puls-kernel-mgr/main/screenshots/ss3.png" width="49%">
+</p>
+
+> **Status:** Heavy development — expect rough edges, bugs and issues, but it works!
+
+---
 
 ## Features
 
+### Dashboard
+- Live overview of running kernel version
+- Current GRUB default entry at a glance
+- `/boot` disk free space with low-space warning
+- Quick-action buttons: Create Snapshot, Refresh Kernel List
+
 ### Kernel Management
-- **Mainline Fetching**: Automatically fetch the latest stable and RC kernels directly from kernel.org.
-- **Tailored Compilation**: Uses `localmodconfig` to create a lean, high-performance kernel tailored specifically to your hardware.
-- **Automatic DKMS**: Rebuilds kernel modules (like NVIDIA drivers) automatically for new kernels.
-- **Dependency Automation**: Automatically installs all required build tools before compilation.
+- **Mainline Fetching**: Fetch latest stable and RC kernels from kernel.org
+- **GPG Verification**: Cryptographic signature check before extraction
+- **Tailored Compilation**: `localmodconfig` creates a lean, hardware-specific kernel
+- **menuconfig Support**: Optional interactive kernel configuration before compiling
+- **Kernel Removal**: Remove installed kernels (blocks removing the running kernel)
+- **Automatic DKMS**: Rebuilds modules (e.g. NVIDIA) for new kernels
+- **Dependency Automation**: Installs all required build tools before compilation
 
 ### Boot & GRUB Control
-- **Parameter Tuning**: Easily modify kernel parameters and GRUB settings.
-- **Boot Order**: Visualized boot entry management to set default kernels and manage submenus.
-- **Safety Backups**: Automatic timestamped backups of your GRUB configuration before any changes are applied.
+- **Parameter Tuning**: Modify kernel parameters and GRUB settings
+- **Boot Order Viewer**: Visualized boot entry management with set-default buttons
+- **Boot Once**: Set a one-time boot entry without changing the default (`grub-reboot`)
+- **Safety Backups**: Automatic timestamped backups of GRUB config with dry-run validation
+- **Backup History**: View and restore any previous GRUB backup
 
 ### Safety & Security
-- **System Snapshots**: Integrated Timeshift support to create system restores before installing new kernels.
-- **Secure Boot (MOK)**: Complete Machine Owner Key management to allow custom kernels to boot on UEFI Secure Boot systems.
-- **Panic Analysis**: Tools to extract and analyze kernel panic logs from `pstore` and `kdump`.
+- **System Snapshots**: Integrated Timeshift support with snapshot history
+- **Dependency Status**: Per-package OK/Fail display for all required tools
+- **Secure Boot (MOK)**: Complete Machine Owner Key management
+- **Panic Analysis**: Extract and analyze kernel panic logs from `pstore` and `kdump`
+
+---
 
 ## Installation
 
-### Dependencies
-Before building or running from source, ensure the following system dependencies are met:
+### Install Debian Package (.deb) — Recommended
 
-**Build Tools:**
-`build-essential`, `flex`, `bison`, `libncurses-dev`, `libssl-dev`, `libelf-dev`, `bc`, `rsync`
-
-**System Utilities:**
-`kdump-tools`, `dkms`, `python3-gi`, `python3-adw`
-
-**Optional System Utilities:**
-`timeshift`, `btrfs-progs`
-
-### Install Debian Package (.deb)
-The recommended way for Debian/Ubuntu based systems:
-1. Download the latest `.deb` from [Releases](https://github.com/word-sys/puls-kernel-mgr/releases).
-2. Install via terminal:
-   ```bash
-   sudo apt update
-   sudo apt install ./puls-kernel-mgr_*.deb
-   ```
+```bash
+sudo apt update
+sudo apt install ./puls-kernel-mgr_*.deb
+```
 
 ### Build from Source
+
 ```bash
 git clone https://github.com/word-sys/puls-kernel-mgr.git
 cd puls-kernel-mgr
 pip install .
 ```
 
-## Usage
-Launch the application via your application menu or terminal:
+### Dependencies
 
-**Command Line Interface:**
-```bash
-puls-kernel-mgr
+**Required:**
+```
+python3-gi  gir1.2-adw-1  gir1.2-gtk-4.0  pkexec  grub2-common
+tar  wget  xz-utils  gpg  openssl  mokutil  dkms  librsvg2-common
 ```
 
-**Graphical User Interface (GTK/Libadwaita):**
+**Build tools (auto-installed on first run):**
+```
+build-essential  flex  bison  libncurses-dev  libssl-dev  libelf-dev  bc  rsync
+```
+
+**Optional:**
+```
+timeshift  btrfs-progs  kdump-tools
+```
+
+---
+
+## Usage
+
+**Graphical Interface (GTK4/Libadwaita):**
 ```bash
 puls-kernel-mgr-gtk
 ```
 
+**Command Line Interface:**
+```bash
+puls-kernel-mgr                            # Interactive TUI
+puls-kernel-mgr snapshot create           # Create a Timeshift snapshot
+puls-kernel-mgr analyze-panic            # Show kernel panic logs
+puls-kernel-mgr generate-mok            # Generate Machine Owner Key
+puls-kernel-mgr enroll-mok <password>  # Enroll MOK for Secure Boot
+```
+
 ---
+
 **Developer:** Barın Güzeldemirci  
-**License:** GPL-3.0
+**License:** GPL-3.0  
+**Homepage:** https://github.com/word-sys/puls-kernel-mgr

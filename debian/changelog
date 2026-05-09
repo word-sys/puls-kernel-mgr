@@ -1,3 +1,36 @@
+puls-kernel-mgr (0.2.0) bookworm; urgency=medium
+
+  * GNOME taskbar now shows correct app name instead of "com.puls.kernelmgr"
+  * App icon now resolves correctly for both source runs and .deb installs
+  * Security vulnerability — MOK enrollment password no longer injected as
+    a shell string literal; passed safely via temp file + stdin
+  * generate_custom_entry() now uses real root UUID via grub-probe
+  * validate_dry_run() uses tempfile instead of hardcoded /tmp path
+  * Dashboard page with running kernel, GRUB default, /boot free space cards
+  * Kernel removal — Remove button on installed kernels (blocks running kernel)
+  * menuconfig toggle switch in the Kernels page GUI
+  * Boot Once (grub-reboot) button in Boot Manager page
+  * GRUB backup history viewer with per-entry Restore buttons
+  * Per-package dependency status display (green checkmark / red X per tool)
+  * "Don't show again" checkbox on pre-launch warning (uses Adw.StatusPage)
+  * Streaming download with live MB/% progress in log dialog
+  * check_boot_space() warns when /boot has < 350 MB free
+  * grub_backup rotation — keeps last 10 snapshots, auto-deletes older ones
+  * get_dependency_status() returns per-package installed state
+  * list_timeshift_snapshots() for Timeshift integration
+  * get_mok_status() shows enrolled key count
+  * os_detect.py now detects package manager; apt check before install deps
+  * Kernel compilation now uses --load-average to avoid system lockup
+  * Additional GPG signing keys for kernel verification
+  * AppStream metainfo XML for GNOME Software integration
+  * debian/postinst runs gtk-update-icon-cache + update-desktop-database
+  * .desktop file gains StartupWMClass and Keywords fields
+  * Version centralised in __init__.py via importlib.metadata
+  * on_install_kernel refreshes installed list after completion
+  * wget added to managed build dependencies
+
+ -- Barın Güzeldemirci <baringuzeldemir@gmail.com>  Fri, 09 May 2026 19:00:00 +0300
+
 puls-kernel-mgr (0.1.1) bullseye; urgency=medium
 
   * Inital pre-release 2. Testing phase 2

@@ -1,4 +1,5 @@
 import sys
+import os
 import curses
 from puls_kernel_mgr.core.grub import GrubManager
 from puls_kernel_mgr.core.kernel import KernelManager
@@ -75,7 +76,6 @@ def curses_main(stdscr):
     while True:
         main_options = ["Kernels", "Boot Manager", "Safety & Security", "About", "Exit"]
         
-        # Build context dict
         g_man = GrubManager()
         cfg = g_man.read_default_config()
         grub_context = "View and modify your GRUB boot entries.\n\nCurrent Configuration:"
@@ -117,7 +117,8 @@ def curses_main(stdscr):
         elif choice == 3:
             about_opts = ["Back"]
             title = "--- About ---"
-            about_context = "PULS Kernel/GRUB Manager\nVersion: 0.1.0\n\nDeveloper: Barın Güzeldemirci\nContact: baringuzeldemir@gmail.com\n\nLicense: GPL-3.0-or-later\nThis program is free software."
+            from puls_kernel_mgr import __version__
+            about_context = f"PULS Kernel/GRUB Manager\nVersion: {__version__}\n\nDeveloper: Barın Güzeldemirci\nContact: baringuzeldemir@gmail.com\n\nLicense: GPL-3.0-or-later\nThis program is free software."
             interactive_menu(stdscr, title, about_opts, {0: about_context})
         elif choice == 2:
             while True:
@@ -145,9 +146,22 @@ def curses_main(stdscr):
                     stdscr.clear()
                 elif s_choice == 3:
                     curses.endwin()
-                    import getpass
+                    import getpass, json, tempfile
                     pw = getpass.getpass("Enter new MOK password: ")
-                    subprocess.run(["sudo", sys.executable, "-c", f"from puls_kernel_mgr.core.security import SecurityManager; sm=SecurityManager(); _,msg=sm.enroll_mok('{pw}'); print(msg)"])
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tf:
+                        json.dump({'password': pw}, tf)
+                        pw_file = tf.name
+                    os.chmod(pw_file, 0o600)
+                    code = (
+                        f"import json, os\n"
+                        f"data = json.load(open({pw_file!r}))\n"
+                        f"os.unlink({pw_file!r})\n"
+                        f"from puls_kernel_mgr.core.security import SecurityManager\n"
+                        f"sm = SecurityManager()\n"
+                        f"_, msg = sm.enroll_mok(data['password'])\n"
+                        f"print(msg)\n"
+                    )
+                    subprocess.run(["sudo", sys.executable, "-c", code])
                     input("Press Enter to continue...")
                     stdscr.clear()
                 elif s_choice == 4:
