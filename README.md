@@ -26,7 +26,7 @@ PULS Kernel/GRUB Manager is a specialized tool for Linux users who need fine-gra
 ### Dashboard
 - Live overview of running kernel version
 - Current GRUB default entry at a glance
-- `/boot` disk free space with low-space warning
+- `/boot` disk free space
 - Quick-action buttons: Create Snapshot, Refresh Kernel List
 
 ### Kernel Management
@@ -99,15 +99,10 @@ puls-kernel-mgr-gtk
 
 **Command Line Interface:**
 ```bash
-puls-kernel-mgr                            # Interactive TUI
-puls-kernel-mgr snapshot create           # Create a Timeshift snapshot
-puls-kernel-mgr analyze-panic            # Show kernel panic logs
-puls-kernel-mgr generate-mok            # Generate Machine Owner Key
-puls-kernel-mgr enroll-mok <password>  # Enroll MOK for Secure Boot
+puls-kernel-mgr                            
 ```
 
 ---
 
 **Developer:** Barın Güzeldemirci  
 **License:** GPL-3.0  
-**Homepage:** https://github.com/word-sys/puls-kernel-mgr
