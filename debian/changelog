@@ -1,3 +1,9 @@
+puls-kernel-mgr (1.2.0) bookworm; urgency=medium
+
+  * Add Turkish language support
+
+ -- Barın Güzeldemirci <baringuzeldemir@gmail.com>  Fri, 09 May 2026 19:00:00 +0300
+
 puls-kernel-mgr (0.2.0) bookworm; urgency=medium
 
   * GNOME taskbar now shows correct app name instead of "com.puls.kernelmgr"

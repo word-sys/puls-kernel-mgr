@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-07-20
+
+### Added
+- **Turkish Language Support**: Added Turkish language support to the application.
+
 ## [0.2.0] - 2026-05-09
 
 ### Added
