@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            debhelper \
+            dh-python \
+            python3-all \
+            python3-setuptools \
+            python3-pip \
+            fakeroot \
+            build-essential \
+            lintian
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build source archives (tar.gz and zip)
+        run: |
+          pip install build
+          python -m build --sdist --outdir dist/
+          VERSION=${{ steps.version.outputs.VERSION }}
+          cd dist
+          SDIST="puls_kernel_mgr-${VERSION}.tar.gz"
+          if [ -f "$SDIST" ]; then
+            cp "$SDIST" "puls-kernel-mgr_${VERSION}.tar.gz"
+          fi
+          tar -xzf "puls-kernel-mgr_${VERSION}.tar.gz"
+          zip -r "puls-kernel-mgr_${VERSION}.zip" "puls_kernel_mgr-${VERSION}/"
+          rm -rf "puls_kernel_mgr-${VERSION}/"
+
+      - name: Fix python3 symlink for dpkg-buildpackage
+        run: sudo ln -sfn /usr/bin/python3.10 /usr/bin/python3
+
+      - name: Build Debian package
+        run: |
+          dpkg-buildpackage -us -uc -b
+          ls -lh ../*.deb
+
+      - name: Collect and rename artifacts
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          DEB=$(ls ../*.deb | head -n1)
+          cp "$DEB" "dist/puls-kernel-mgr_${VERSION}_all.deb"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "PULS Kernel Manager v${{ steps.version.outputs.VERSION }}"
+          body_path: CHANGELOG.md
+          files: |
+            dist/puls-kernel-mgr_${{ steps.version.outputs.VERSION }}.tar.gz
+            dist/puls-kernel-mgr_${{ steps.version.outputs.VERSION }}.zip
+            dist/puls-kernel-mgr_${{ steps.version.outputs.VERSION }}_all.deb
