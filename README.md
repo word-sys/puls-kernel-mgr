@@ -1,3 +1,5 @@
+![Dil TR](https://github.com/word-sys/puls-kernel-mgr/blob/main/README_TR.md)
+
 <p>
   <img src="https://raw.githubusercontent.com/word-sys/puls-kernel-mgr/main/puls-k_icon.svg" width="256" height="256" alt="PULS Kernel Manager Icon"/>
 </p>
