@@ -66,8 +66,8 @@ class KernelManager:
                             moniker = item.get("moniker", "prebuilt")
                             if ver and img_fn and hdr_fn:
                                 deb_urls = [
-                                    f"https://prebuiltkernels.com/{img_fn}",
-                                    f"https://prebuiltkernels.com/{hdr_fn}",
+                                    f"https://prebuiltkernels.com/download/{img_fn}",
+                                    f"https://prebuiltkernels.com/download/{hdr_fn}",
                                 ]
                                 prebuilt_kernels.append({
                                     "version": ver,
