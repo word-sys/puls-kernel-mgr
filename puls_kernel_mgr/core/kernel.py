@@ -6,8 +6,7 @@ import re
 import shutil
 import tempfile
 import glob
-
-
+import time
 import json
 
 
@@ -403,8 +402,9 @@ class KernelManager:
                 print(f"Warning: menuconfig failed: {msg}")
 
         env = kconf.set_reproducible_build_env()
+        build_start_time = time.time() - 10
         nproc = str(os.cpu_count() or 1)
-        print(f"Building Debian (.deb) kernel packages with {nproc} threads using bindeb-pkg...")
+        print(f"Building Debian (.deb) kernel packages for {version} with {nproc} threads using bindeb-pkg...")
         try:
             subprocess.run(
                 f"yes '' | make -j {nproc} bindeb-pkg",
@@ -425,10 +425,12 @@ class KernelManager:
 
         parent_dir = os.path.dirname(src_dir.rstrip("/"))
         deb_files = glob.glob(os.path.join(parent_dir, "*.deb"))
+        ver_clean = str(version).lstrip("v")
         target_debs = [
             f
             for f in deb_files
             if ("linux-image-" in f or "linux-headers-" in f)
+            and (ver_clean in os.path.basename(f) or os.path.getmtime(f) >= build_start_time)
         ]
 
         if not target_debs:
