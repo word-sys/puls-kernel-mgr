@@ -430,15 +430,17 @@ class KernelManager:
             f
             for f in deb_files
             if ("linux-image-" in f or "linux-headers-" in f)
-            and (ver_clean in os.path.basename(f) or os.path.getmtime(f) >= build_start_time)
+            and ver_clean in os.path.basename(f)
+            and os.path.getmtime(f) >= build_start_time
         ]
 
-        if not target_debs:
+        has_image_deb = any("linux-image-" in f for f in target_debs)
+        if not target_debs or not has_image_deb:
             print(
-                "Warning: bindeb-pkg did not produce recognizable deb packages. "
-                "Falling back to standard make install..."
+                f"Warning: bindeb-pkg did not produce a complete linux-image deb package for {version}. "
+                "Falling back to standard make modules_install & make install..."
             )
-            subprocess.run(["make", "modules_install"], cwd=src_dir, env=env, check=True)
+            subprocess.run(["make", "-j", nproc, "modules_install"], cwd=src_dir, env=env, check=True)
             subprocess.run(["make", "install"], cwd=src_dir, env=env, check=True)
         else:
             print(
