@@ -377,30 +377,21 @@ class KernelManager:
                 ["cp", config_path, os.path.join(src_dir, ".config")], check=True
             )
 
-        subprocess.run(["make", "olddefconfig"], cwd=src_dir, check=True)
-        subprocess.run(
-            "yes '' | make localmodconfig", shell=True, cwd=src_dir, check=True
-        )
-        subprocess.run(
+        # Disable signing keys and BTF debug info BEFORE olddefconfig to avoid interactive prompts
+        for cfg_cmd in [
             ["scripts/config", "--set-str", "SYSTEM_TRUSTED_KEYS", ""],
-            cwd=src_dir,
-            check=True,
-        )
-        subprocess.run(
             ["scripts/config", "--set-str", "SYSTEM_REVOCATION_KEYS", ""],
-            cwd=src_dir,
-            check=True,
-        )
-        subprocess.run(
-            ["scripts/config", "--disable", "DEBUG_INFO_BTF"],
-            cwd=src_dir,
-            check=True,
-        )
-        subprocess.run(
+            ["scripts/config", "--set-str", "MODULE_SIG_KEY", ""],
+            ["scripts/config", "--disable", "SYSTEM_TRUSTED_KEYS"],
+            ["scripts/config", "--disable", "SYSTEM_REVOCATION_KEYS"],
             ["scripts/config", "--disable", "MODULE_SIG_KEY"],
-            cwd=src_dir,
-            check=True,
-        )
+            ["scripts/config", "--disable", "MODULE_SIG"],
+            ["scripts/config", "--disable", "DEBUG_INFO_BTF"],
+        ]:
+            subprocess.run(cfg_cmd, cwd=src_dir, check=False)
+
+        subprocess.run("yes '' | make olddefconfig", shell=True, cwd=src_dir, check=True)
+        subprocess.run("yes '' | make localmodconfig", shell=True, cwd=src_dir, check=True)
 
         from puls_kernel_mgr.core.kconfig import KconfigManager
 
@@ -416,7 +407,8 @@ class KernelManager:
         print(f"Building Debian (.deb) kernel packages with {nproc} threads using bindeb-pkg...")
         try:
             subprocess.run(
-                ["make", "-j", nproc, "bindeb-pkg"],
+                f"yes '' | make -j {nproc} bindeb-pkg",
+                shell=True,
                 cwd=src_dir,
                 env=env,
                 check=True,
@@ -424,7 +416,8 @@ class KernelManager:
         except subprocess.CalledProcessError:
             print("bindeb-pkg failed, attempting with fakeroot...")
             subprocess.run(
-                ["fakeroot", "make", "-j", nproc, "bindeb-pkg"],
+                f"yes '' | fakeroot make -j {nproc} bindeb-pkg",
+                shell=True,
                 cwd=src_dir,
                 env=env,
                 check=True,

@@ -13,6 +13,9 @@ class SafetyManager:
         "libncurses-dev",
         "libssl-dev",
         "libelf-dev",
+        "libdw-dev",
+        "dwarves",
+        "zstd",
         "bc",
         "rsync",
         "wget",
@@ -32,6 +35,9 @@ class SafetyManager:
         "libncurses-dev":  None,   # dpkg only
         "libssl-dev":      None,   # dpkg only
         "libelf-dev":      None,   # dpkg only
+        "libdw-dev":       None,   # dpkg only
+        "dwarves":         "pahole",
+        "zstd":            "zstd",
         "bc":              "bc",
         "rsync":           "rsync",
         "wget":            "wget",
