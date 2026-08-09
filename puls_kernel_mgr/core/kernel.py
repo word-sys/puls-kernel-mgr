@@ -15,51 +15,51 @@ class KernelManager:
     def __init__(self):
         self.download_dir = "/usr/src"
         self.mirror_base = "https://mirrors.edge.kernel.org/pub/linux/kernel/"
-        self.zen_repo_api = "https://api.github.com/repos/zen-kernel/zen-kernel/tags"
+        self.zen_repo_api = "https://api.github.com/repos/zen-kernel/zen-kernel/tags?per_page=100"
         self.prebuilt_builds_url = "https://prebuiltkernels.com/builds"
         self.prebuilt_home_url = "https://prebuiltkernels.com/"
 
     def fetch_zen_kernels(self):
-        """Fetch available Linux-Zen kernel releases."""
+        """Fetch available Linux-Zen kernel releases across multiple pages."""
         zen_kernels = []
         try:
-            resp = requests.get(self.zen_repo_api, timeout=10)
-            if resp.status_code == 200:
-                tags = resp.json()
-                for t in tags[:15]:
-                    name = t.get("name", "")
-                    ver = name[1:] if name.startswith("v") else name
-                    tar_url = f"https://github.com/zen-kernel/zen-kernel/archive/refs/tags/{name}.tar.gz"
-                    zen_kernels.append({
-                        "version": ver,
-                        "moniker": "zen",
-                        "iseol": False,
-                        "source": tar_url,
-                        "pgp": None,
-                        "kernel_type": "zen",
-                    })
-            else:
-                print(f"Failed to fetch Linux-Zen kernels: HTTP {resp.status_code}")
+            for page in range(1, 4):
+                url = f"https://api.github.com/repos/zen-kernel/zen-kernel/tags?per_page=100&page={page}"
+                resp = requests.get(url, timeout=10)
+                if resp.status_code == 200:
+                    tags = resp.json()
+                    if not tags:
+                        break
+                    for t in tags:
+                        name = t.get("name", "")
+                        ver = name[1:] if name.startswith("v") else name
+                        tar_url = f"https://github.com/zen-kernel/zen-kernel/archive/refs/tags/{name}.tar.gz"
+                        zen_kernels.append({
+                            "version": ver,
+                            "moniker": "zen",
+                            "iseol": False,
+                            "source": tar_url,
+                            "pgp": None,
+                            "kernel_type": "zen",
+                        })
+                else:
+                    break
         except Exception as e:
             print(f"Error fetching Linux-Zen kernels: {e}")
         return zen_kernels
 
     def fetch_prebuilt_kernels(self):
-        """Fetch prebuilt DEB kernel packages from prebuiltkernels.com/builds."""
+        """Fetch all prebuilt DEB kernel packages across all pages of prebuiltkernels.com."""
         prebuilt_kernels = []
-        target_urls = [self.prebuilt_builds_url, self.prebuilt_home_url]
-        for url in target_urls:
+        for page in range(1, 30):
             try:
+                url = f"https://prebuiltkernels.com/builds/page/{page}"
                 resp = requests.get(url, timeout=10)
                 if resp.status_code == 200:
-                    match = re.search(
-                        r'id\s*=\s*["\']contentBuilds["\']\s*>\s*(\[.*?\])\s*</div',
-                        resp.text,
-                        re.DOTALL,
-                    )
-                    if match:
-                        json_str = match.group(1)
-                        items = json.loads(json_str)
+                    try:
+                        items = resp.json()
+                        if not items:
+                            break
                         for item in items:
                             ver = item.get("version")
                             img_fn = item.get("linux_image_filename")
@@ -73,14 +73,17 @@ class KernelManager:
                                 prebuilt_kernels.append({
                                     "version": ver,
                                     "moniker": moniker,
-                                    "iseol": False,
+                                    "iseol": (moniker == "eol"),
                                     "deb_urls": deb_urls,
                                     "kernel_type": "prebuilt",
                                 })
-                        if prebuilt_kernels:
-                            break
+                    except Exception:
+                        break
+                else:
+                    break
             except Exception as e:
-                print(f"Error fetching prebuilt kernels from {url}: {e}")
+                print(f"Error fetching prebuilt kernels page {page}: {e}")
+                break
         return prebuilt_kernels
 
     def fetch_available_kernels(self):
