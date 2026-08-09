@@ -8,12 +8,16 @@ import tempfile
 import glob
 
 
+import json
+
+
 class KernelManager:
     def __init__(self):
         self.download_dir = "/usr/src"
         self.mirror_base = "https://mirrors.edge.kernel.org/pub/linux/kernel/"
         self.zen_repo_api = "https://api.github.com/repos/zen-kernel/zen-kernel/tags"
-        self.prebuilt_api = "https://prebuiltkernels.com/api/v1/kernels.json"
+        self.prebuilt_builds_url = "https://prebuiltkernels.com/builds"
+        self.prebuilt_home_url = "https://prebuiltkernels.com/"
 
     def fetch_zen_kernels(self):
         """Fetch available Linux-Zen kernel releases."""
@@ -41,24 +45,42 @@ class KernelManager:
         return zen_kernels
 
     def fetch_prebuilt_kernels(self):
-        """Fetch prebuilt DEB kernel packages (e.g. prebuiltkernels.com)."""
+        """Fetch prebuilt DEB kernel packages from prebuiltkernels.com/builds."""
         prebuilt_kernels = []
-        try:
-            resp = requests.get(self.prebuilt_api, timeout=10)
-            if resp.status_code == 200:
-                data = resp.json()
-                for item in data.get("kernels", []):
-                    prebuilt_kernels.append({
-                        "version": item.get("version"),
-                        "moniker": "prebuilt",
-                        "iseol": False,
-                        "deb_urls": item.get("deb_urls", []),
-                        "kernel_type": "prebuilt",
-                    })
-            else:
-                print(f"Failed to fetch prebuilt kernels: HTTP {resp.status_code}")
-        except Exception as e:
-            print(f"Error fetching prebuilt kernels: {e}")
+        target_urls = [self.prebuilt_builds_url, self.prebuilt_home_url]
+        for url in target_urls:
+            try:
+                resp = requests.get(url, timeout=10)
+                if resp.status_code == 200:
+                    match = re.search(
+                        r'id\s*=\s*["\']contentBuilds["\']\s*>\s*(\[.*?\])\s*</div',
+                        resp.text,
+                        re.DOTALL,
+                    )
+                    if match:
+                        json_str = match.group(1)
+                        items = json.loads(json_str)
+                        for item in items:
+                            ver = item.get("version")
+                            img_fn = item.get("linux_image_filename")
+                            hdr_fn = item.get("linux_headers_filename")
+                            moniker = item.get("moniker", "prebuilt")
+                            if ver and img_fn and hdr_fn:
+                                deb_urls = [
+                                    f"https://prebuiltkernels.com/{img_fn}",
+                                    f"https://prebuiltkernels.com/{hdr_fn}",
+                                ]
+                                prebuilt_kernels.append({
+                                    "version": ver,
+                                    "moniker": moniker,
+                                    "iseol": False,
+                                    "deb_urls": deb_urls,
+                                    "kernel_type": "prebuilt",
+                                })
+                        if prebuilt_kernels:
+                            break
+            except Exception as e:
+                print(f"Error fetching prebuilt kernels from {url}: {e}")
         return prebuilt_kernels
 
     def fetch_available_kernels(self):

@@ -67,7 +67,6 @@ class LiveLogDialog(Adw.Window):
 
         self._buffer = self._text_view.get_buffer()
 
-
     def append_line(self, line: str):
         end_iter = self._buffer.get_end_iter()
         self._buffer.insert(end_iter, line)
@@ -90,10 +89,11 @@ class KernelManagerWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.tm = TranslationManager()
-        self.tr = self.tm.tr
+        self.tr = lambda key, **kwargs: GLib.markup_escape_text(self.tm.tr(key, **kwargs))
 
         self.set_title(self.tr("app_title"))
-        self.set_default_size(1060, 780)
+        self.set_default_size(780, 560)
+        self.set_size_request(540, 380)
 
         self.icon_path = _resolve_icon_path()
 
@@ -199,15 +199,13 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.menu_model.append(self.tr("about"), "app.about")
 
         self.refresh_dashboard()
-        
-        self.kernels_welcome_label.set_label(self.tr("available_upstream_kernels"))
-        self.kernels_desc_label.set_label(self.tr("select_kernel_desc"))
         self.kernels_installed_label.set_label(self.tr("locally_installed_kernels"))
+        self.mainline_label.set_label(self.tr("kernel_type_mainline"))
+        self.zen_label.set_label(self.tr("kernel_type_zen"))
+        self.prebuilt_label.set_label(self.tr("kernel_type_prebuilt"))
         self.mc_row.set_title(self.tr("advanced_menuconfig"))
         self.mc_row.set_subtitle(self.tr("menuconfig_desc"))
         self._refresh_installed_kernels()
-        self.kernels_group = Adw.PreferencesGroup()
-        self.kernels_clamp.set_child(self.kernels_group)
         GLib.idle_add(self.load_kernels)
 
         self.grub_title.set_label(self.tr("grub_configuration"))
@@ -251,17 +249,21 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.panic_btn.set_label(self.tr("analyze_panics"))
 
     def setup_dashboard_page(self):
-        self.dashboard_outer_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
-        self.dashboard_outer_box.set_margin_top(28)
-        self.dashboard_outer_box.set_margin_bottom(28)
-        self.dashboard_outer_box.set_margin_start(28)
-        self.dashboard_outer_box.set_margin_end(28)
+        self.dashboard_outer_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        self.dashboard_outer_box.set_margin_top(20)
+        self.dashboard_outer_box.set_margin_bottom(20)
+        self.dashboard_outer_box.set_margin_start(20)
+        self.dashboard_outer_box.set_margin_end(20)
 
         self.refresh_dashboard()
 
+        clamp = Adw.Clamp(maximum_size=800)
+        clamp.set_child(self.dashboard_outer_box)
+
         scroll = Gtk.ScrolledWindow()
         scroll.set_vexpand(True)
-        scroll.set_child(self.dashboard_outer_box)
+        scroll.set_hexpand(True)
+        scroll.set_child(clamp)
         self.dashboard_page_stack = self.view_stack.add_titled(scroll, "dashboard", self.tr("dashboard"))
         self.dashboard_page_stack.set_icon_name("go-home-symbolic")
 
@@ -333,9 +335,6 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         refresh_btn.set_icon_name("view-refresh-symbolic")
         refresh_btn.add_css_class("pill")
         def do_refresh(b):
-            if hasattr(self, 'kernels_clamp'):
-                self.kernels_group = Adw.PreferencesGroup()
-                self.kernels_clamp.set_child(self.kernels_group)
             GLib.idle_add(self.load_kernels)
         refresh_btn.connect("clicked", do_refresh)
         qa_box.append(snap_btn)
@@ -343,77 +342,84 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.dashboard_outer_box.append(qa_box)
 
     def setup_kernels_page(self):
-        page_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=24)
-        page_box.set_margin_top(24)
-        page_box.set_margin_bottom(24)
-        page_box.set_margin_start(24)
-        page_box.set_margin_end(24)
-        left_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        left_box.set_hexpand(True)
-        self.kernels_welcome_label = Gtk.Label(label=self.tr("available_upstream_kernels"))
-        self.kernels_welcome_label.add_css_class("title-2")
-        self.kernels_welcome_label.set_halign(Gtk.Align.START)
-        left_box.append(self.kernels_welcome_label)
-        
-        self.kernels_desc_label = Gtk.Label(label=self.tr("select_kernel_desc"))
-        self.kernels_desc_label.add_css_class("dim-label")
-        self.kernels_desc_label.set_halign(Gtk.Align.START)
-        left_box.append(self.kernels_desc_label)
-        
-        self.kernels_group = Adw.PreferencesGroup()
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_vexpand(True)
-        
-        self.kernels_clamp = Adw.Clamp(maximum_size=700)
-        self.kernels_clamp.set_child(self.kernels_group)
-        scroll.set_child(self.kernels_clamp)
-        left_box.append(scroll)
-        
-        right_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        right_box.set_hexpand(True)
-        
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        vbox.set_margin_top(20)
+        vbox.set_margin_bottom(20)
+        vbox.set_margin_start(20)
+        vbox.set_margin_end(20)
+
+        # 1. Locally Installed Kernels
         self.kernels_installed_label = Gtk.Label(label=self.tr("locally_installed_kernels"))
         self.kernels_installed_label.add_css_class("title-2")
         self.kernels_installed_label.set_halign(Gtk.Align.START)
-        right_box.append(self.kernels_installed_label)
-        
+        vbox.append(self.kernels_installed_label)
+
+        self.installed_kernels_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.installed_kernels_group = Adw.PreferencesGroup()
+        self.installed_kernels_container.append(self.installed_kernels_group)
         self._refresh_installed_kernels()
+        vbox.append(self.installed_kernels_container)
 
-        scroll_installed = Gtk.ScrolledWindow()
-        scroll_installed.set_vexpand(True)
-        self.installed_clamp = Adw.Clamp(maximum_size=700)
-        self.installed_clamp.set_child(self.installed_kernels_group)
-        scroll_installed.set_child(self.installed_clamp)
-        right_box.append(scroll_installed)
+        # 2. Mainline Linux Kernels
+        self.mainline_label = Gtk.Label(label=self.tr("kernel_type_mainline"))
+        self.mainline_label.add_css_class("title-2")
+        self.mainline_label.set_margin_top(8)
+        self.mainline_label.set_halign(Gtk.Align.START)
+        vbox.append(self.mainline_label)
 
+        self.mainline_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        vbox.append(self.mainline_box)
+
+        # 3. Linux-Zen Kernels
+        self.zen_label = Gtk.Label(label=self.tr("kernel_type_zen"))
+        self.zen_label.add_css_class("title-2")
+        self.zen_label.set_margin_top(8)
+        self.zen_label.set_halign(Gtk.Align.START)
+        vbox.append(self.zen_label)
+
+        self.zen_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        vbox.append(self.zen_box)
+
+        # 4. Prebuilt DEB Kernels
+        self.prebuilt_label = Gtk.Label(label=self.tr("kernel_type_prebuilt"))
+        self.prebuilt_label.add_css_class("title-2")
+        self.prebuilt_label.set_margin_top(8)
+        self.prebuilt_label.set_halign(Gtk.Align.START)
+        vbox.append(self.prebuilt_label)
+
+        self.prebuilt_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        vbox.append(self.prebuilt_box)
+
+        # 5. Advanced Config (menuconfig)
         self.mc_row = Adw.ActionRow(title=self.tr("advanced_menuconfig"))
         self.mc_row.set_subtitle(self.tr("menuconfig_desc"))
         self._mc_switch = Gtk.Switch()
         self._mc_switch.set_valign(Gtk.Align.CENTER)
         self._mc_switch.connect("notify::active", lambda s, _: setattr(self, '_use_menuconfig', s.get_active()))
         self.mc_row.add_suffix(self._mc_switch)
-        mc_clamp = Adw.Clamp(maximum_size=700)
         mc_group = Adw.PreferencesGroup()
         mc_group.add(self.mc_row)
-        mc_clamp.set_child(mc_group)
-        right_box.append(mc_clamp)
-        page_box.append(left_box)
-        page_box.append(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL))
-        page_box.append(right_box)
-        GLib.idle_add(self.load_kernels)
-        
-        self.kernels_page_stack = self.view_stack.add_titled(page_box, "kernels", self.tr("kernels"))
+        vbox.append(mc_group)
+
+        clamp = Adw.Clamp(maximum_size=800)
+        clamp.set_child(vbox)
+
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_vexpand(True)
+        scroll.set_hexpand(True)
+        scroll.set_child(clamp)
+
+        self.kernels_page_stack = self.view_stack.add_titled(scroll, "kernels", self.tr("kernels"))
         self.kernels_page_stack.set_icon_name("system-software-install-symbolic")
 
     def setup_grub_page(self):
-        page_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=24)
-        page_box.set_margin_top(24)
-        page_box.set_margin_bottom(24)
-        page_box.set_margin_start(24)
-        page_box.set_margin_end(24)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        vbox.set_margin_top(20)
+        vbox.set_margin_bottom(20)
+        vbox.set_margin_start(20)
+        vbox.set_margin_end(20)
+
         config_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        config_box.set_hexpand(True)
         self.grub_title = Gtk.Label(label=self.tr("grub_configuration"))
         self.grub_title.add_css_class("title-2")
         self.grub_title.set_halign(Gtk.Align.START)
@@ -423,6 +429,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.grub_desc.set_halign(Gtk.Align.START)
         self.grub_desc.add_css_class("dim-label")
         config_box.append(self.grub_desc)
+
         self.grub_settings_group = Adw.PreferencesGroup(title=self.tr("settings"))
         config = self.grub_manager.read_default_config()
         current_default = config.get("GRUB_DEFAULT", "0")
@@ -433,12 +440,14 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.default_entry.set_hexpand(True)
         self.default_entry_row.add_suffix(self.default_entry)
         self.grub_settings_group.add(self.default_entry_row)
+
         self.timeout_row = Adw.ActionRow(title=self.tr("grub_timeout"))
         self.timeout_entry = Gtk.Entry()
         self.timeout_entry.set_text(config.get("GRUB_TIMEOUT", "5"))
         self.timeout_entry.set_valign(Gtk.Align.CENTER)
         self.timeout_row.add_suffix(self.timeout_entry)
         self.grub_settings_group.add(self.timeout_row)
+
         self.cmdline_row = Adw.ActionRow(title=self.tr("kernel_parameters"))
         self.cmdline_entry = Gtk.Entry()
         self.cmdline_entry.set_text(config.get("GRUB_CMDLINE_LINUX_DEFAULT", "quiet splash"))
@@ -446,6 +455,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.cmdline_entry.set_hexpand(True)
         self.cmdline_row.add_suffix(self.cmdline_entry)
         self.grub_settings_group.add(self.cmdline_row)
+
         self.safe_mode_row = Adw.ActionRow(title=self.tr("enable_safe_mode"))
         self.safe_mode_switch = Gtk.Switch()
         self.safe_mode_switch.set_valign(Gtk.Align.CENTER)
@@ -453,6 +463,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
             self.safe_mode_switch.set_active(True)
         self.safe_mode_row.add_suffix(self.safe_mode_switch)
         self.grub_settings_group.add(self.safe_mode_row)
+
         self.theme_row = Adw.ActionRow(title=self.tr("grub_theme_path"))
         self.theme_entry = Gtk.Entry()
         self.theme_entry.set_text(config.get("GRUB_THEME", ""))
@@ -460,16 +471,15 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.theme_entry.set_hexpand(True)
         self.theme_row.add_suffix(self.theme_entry)
         self.grub_settings_group.add(self.theme_row)
+
         self.grub_save_btn = Gtk.Button(label=self.tr("dry_run_apply"))
         self.grub_save_btn.add_css_class("suggested-action")
         self.grub_save_btn.set_halign(Gtk.Align.CENTER)
         self.grub_save_btn.set_margin_top(12)
         self.grub_save_btn.connect("clicked", self.on_save_grub)
-        clamp = Adw.Clamp(maximum_size=700)
-        clamp.set_child(self.grub_settings_group)
-        config_box.append(clamp)
+        config_box.append(self.grub_settings_group)
         config_box.append(self.grub_save_btn)
- 
+
         self.boot_once_group = Adw.PreferencesGroup(title=self.tr("one_time_boot"))
         self.boot_once_group.set_description(self.tr("one_time_boot_desc"))
         self.boot_once_row = Adw.ActionRow(title=self.tr("boot_once_into"))
@@ -485,10 +495,8 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.boot_once_btn.connect("clicked", self.on_boot_once)
         self.boot_once_row.add_suffix(self.boot_once_btn)
         self.boot_once_group.add(self.boot_once_row)
-        boot_once_clamp = Adw.Clamp(maximum_size=700)
-        boot_once_clamp.set_child(self.boot_once_group)
-        config_box.append(boot_once_clamp)
- 
+        config_box.append(self.boot_once_group)
+
         self.grub_restore_btn = Gtk.Button(label=self.tr("restore_backup"))
         self.grub_restore_btn.add_css_class("destructive-action")
         self.grub_restore_btn.set_halign(Gtk.Align.CENTER)
@@ -497,47 +505,53 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         config_box.append(self.grub_restore_btn)
 
         order_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        order_box.set_hexpand(True)
+        order_box.set_margin_top(12)
         self.boot_order_title = Gtk.Label(label=self.tr("current_boot_order"))
         self.boot_order_title.add_css_class("title-2")
         self.boot_order_title.set_halign(Gtk.Align.START)
         order_box.append(self.boot_order_title)
-        
+
         self.boot_order_desc = Gtk.Label(label=self.tr("boot_order_desc"))
         self.boot_order_desc.set_wrap(True)
         self.boot_order_desc.set_halign(Gtk.Align.START)
         self.boot_order_desc.add_css_class("dim-label")
         order_box.append(self.boot_order_desc)
-        
+
         self.boot_order_list_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.boot_order_list_container.set_vexpand(True)
         order_box.append(self.boot_order_list_container)
         self.refresh_grub_order()
- 
+
         self.backups_title = Gtk.Label(label=self.tr("grub_config_backups"))
         self.backups_title.add_css_class("title-2")
         self.backups_title.set_margin_top(12)
         self.backups_title.set_halign(Gtk.Align.START)
         order_box.append(self.backups_title)
+
+        self.backup_group_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.backup_group = Adw.PreferencesGroup()
+        self.backup_group_container.append(self.backup_group)
         self._refresh_grub_backups()
-        bk_scroll = Gtk.ScrolledWindow()
-        bk_scroll.set_min_content_height(140)
-        self.bk_clamp = Adw.Clamp(maximum_size=700)
-        self.bk_clamp.set_child(self.backup_group)
-        bk_scroll.set_child(self.bk_clamp)
-        order_box.append(bk_scroll)
- 
-        page_box.append(config_box)
-        page_box.append(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL))
-        page_box.append(order_box)
-        self.grub_page_stack = self.view_stack.add_titled(page_box, "grub", self.tr("boot_manager"))
+        order_box.append(self.backup_group_container)
+
+        vbox.append(config_box)
+        vbox.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
+        vbox.append(order_box)
+
+        clamp = Adw.Clamp(maximum_size=800)
+        clamp.set_child(vbox)
+
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_vexpand(True)
+        scroll.set_hexpand(True)
+        scroll.set_child(clamp)
+
+        self.grub_page_stack = self.view_stack.add_titled(scroll, "grub", self.tr("boot_manager"))
         self.grub_page_stack.set_icon_name("drive-harddisk-system-symbolic")
 
     def refresh_grub_order(self):
         while child := self.boot_order_list_container.get_first_child():
             self.boot_order_list_container.remove(child)
-            
+
         entries = self.grub_manager.get_grub_entries()
         order_group = Adw.PreferencesGroup()
         if not entries:
@@ -552,52 +566,47 @@ class KernelManagerWindow(Adw.ApplicationWindow):
                         full_title = f"{entry['title']}>{child['title']}"
                         row.set_subtitle(self.tr("path_title", full_title=full_title))
                         row.set_icon_name("go-next-symbolic")
-                        
+
                         btn = Gtk.Button(label=self.tr("set_as_default"))
                         btn.set_valign(Gtk.Align.CENTER)
                         btn.add_css_class("suggested-action")
                         btn.connect("clicked", lambda b, t=f"{idx}>{child_idx}": self.default_entry.set_text(t))
                         row.add_suffix(btn)
-                        
+
                         expander.add_row(row)
                     order_group.add(expander)
                 else:
                     row = Adw.ActionRow(title=entry["title"])
                     row.set_subtitle(self.tr("main_menu_index", idx=idx))
                     row.set_icon_name("system-run-symbolic")
-                    
+
                     btn = Gtk.Button(label=self.tr("set_as_default"))
                     btn.set_valign(Gtk.Align.CENTER)
                     btn.add_css_class("suggested-action")
                     btn.connect("clicked", lambda b, t=str(idx): self.default_entry.set_text(t))
                     row.add_suffix(btn)
-                    
+
                     order_group.add(row)
-        
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_vexpand(True)
-        clamp_order = Adw.Clamp(maximum_size=700)
-        clamp_order.set_child(order_group)
-        scroll.set_child(clamp_order)
-        self.boot_order_list_container.append(scroll)
+
+        self.boot_order_list_container.append(order_group)
 
     def setup_safety_security_page(self):
-        page_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=24)
-        page_box.set_margin_top(24)
-        page_box.set_margin_bottom(24)
-        page_box.set_margin_start(24)
-        page_box.set_margin_end(24)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        vbox.set_margin_top(20)
+        vbox.set_margin_bottom(20)
+        vbox.set_margin_start(20)
+        vbox.set_margin_end(20)
+
         left_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        left_box.set_hexpand(True)
         self.safety_title = Gtk.Label(label=self.tr("system_safety"))
         self.safety_title.add_css_class("title-2")
         self.safety_title.set_halign(Gtk.Align.START)
         left_box.append(self.safety_title)
-        
-        self.dep_group_clamp = Adw.Clamp(maximum_size=700)
+
+        self.dep_group_clamp = Adw.Clamp(maximum_size=800)
         self.refresh_dependency_list()
         left_box.append(self.dep_group_clamp)
-        
+
         self.snap_group = Adw.PreferencesGroup()
         self.snap_row = Adw.ActionRow(title=self.tr("create_pre_update_snap"))
         self.snap_row.set_subtitle(self.tr("timeshift_desc"))
@@ -606,21 +615,18 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.snap_btn.connect("clicked", self.on_create_snapshot)
         self.snap_row.add_suffix(self.snap_btn)
         self.snap_group.add(self.snap_row)
-        
-        clamp2 = Adw.Clamp(maximum_size=700)
-        clamp2.set_child(self.snap_group)
-        left_box.append(clamp2)
-        
+        left_box.append(self.snap_group)
+
         right_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        right_box.set_hexpand(True)
+        right_box.set_margin_top(12)
         self.sec_title = Gtk.Label(label=self.tr("secure_boot_config"))
         self.sec_title.add_css_class("title-2")
         self.sec_title.set_halign(Gtk.Align.START)
         right_box.append(self.sec_title)
-        
+
         self.sec_group = Adw.PreferencesGroup(title=self.tr("mok_management"))
         self.sec_group.set_description(self.tr("mok_desc"))
-        
+
         self.mok_gen_row = Adw.ActionRow(title=self.tr("mok_gen_title"))
         self.mok_gen_row.set_subtitle(self.tr("mok_gen_desc"))
         self.mok_gen_btn = Gtk.Button(label=self.tr("generate_key"))
@@ -628,6 +634,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.mok_gen_btn.connect("clicked", self.on_generate_mok)
         self.mok_gen_row.add_suffix(self.mok_gen_btn)
         self.sec_group.add(self.mok_gen_row)
+
         self.mok_enroll_row = Adw.ActionRow(title=self.tr("mok_enroll_title"))
         self.mok_enroll_row.set_subtitle(self.tr("mok_enroll_desc"))
         self.mok_pw_entry = Gtk.Entry()
@@ -641,16 +648,16 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.mok_enroll_btn.connect("clicked", self.on_enroll_mok)
         self.mok_enroll_row.add_suffix(self.mok_enroll_btn)
         self.sec_group.add(self.mok_enroll_row)
-        clamp_sec = Adw.Clamp(maximum_size=700)
-        clamp_sec.set_child(self.sec_group)
-        right_box.append(clamp_sec)
+        right_box.append(self.sec_group)
+
         self.panic_title = Gtk.Label(label=self.tr("kernel_panic_logs"))
         self.panic_title.add_css_class("title-2")
         self.panic_title.set_margin_top(16)
         self.panic_title.set_halign(Gtk.Align.START)
         right_box.append(self.panic_title)
+
         panic_scroll = Gtk.ScrolledWindow()
-        panic_scroll.set_min_content_height(150)
+        panic_scroll.set_min_content_height(100)
         panic_scroll.set_vexpand(True)
         self.panic_view = Gtk.TextView()
         self.panic_view.set_editable(False)
@@ -662,15 +669,21 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         panic_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         panic_box.append(panic_scroll)
         panic_box.append(self.panic_btn)
-        clamp3 = Adw.Clamp(maximum_size=700)
-        clamp3.set_child(panic_box)
-        right_box.append(clamp3)
-        
-        page_box.append(left_box)
-        page_box.append(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL))
-        page_box.append(right_box)
-        
-        self.safety_security_page_stack = self.view_stack.add_titled(page_box, "safety_security", self.tr("safety_security"))
+        right_box.append(panic_box)
+
+        vbox.append(left_box)
+        vbox.append(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
+        vbox.append(right_box)
+
+        clamp = Adw.Clamp(maximum_size=800)
+        clamp.set_child(vbox)
+
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_vexpand(True)
+        scroll.set_hexpand(True)
+        scroll.set_child(clamp)
+
+        self.safety_security_page_stack = self.view_stack.add_titled(scroll, "safety_security", self.tr("safety_security"))
         self.safety_security_page_stack.set_icon_name("security-high-symbolic")
 
     def refresh_dependency_list(self):
@@ -704,16 +717,6 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         dialog_title: str = "Running Privileged Action",
         on_done=None,
     ):
-        """Run *code_str* via pkexec and stream all output live into a
-        :class:`LiveLogDialog`.  Must be called from the GTK main thread;
-        the actual subprocess runs on a daemon thread.
-
-        Args:
-            on_done: optional zero-argument callable invoked (from the reader
-                     thread) after the subprocess exits, useful for re-enabling
-                     buttons or triggering follow-up UI work.
-        """
-
         log_dialog = LiveLogDialog(dialog_title, self)
         log_dialog.present()
 
@@ -732,7 +735,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
-                    bufsize=1,          # line-buffered
+                    bufsize=1,
                 )
                 for line in proc.stdout:
                     GLib.idle_add(log_dialog.append_line, line)
@@ -752,7 +755,6 @@ class KernelManagerWindow(Adw.ApplicationWindow):
                     on_done()
 
         threading.Thread(target=_reader, daemon=True).start()
-
 
     def on_boot_once(self, btn):
         title = self.boot_once_entry.get_text().strip()
@@ -778,22 +780,24 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         )
 
     def _refresh_grub_backups(self):
-        if hasattr(self, 'bk_clamp'):
-            self.backup_group = Adw.PreferencesGroup()
-            self.bk_clamp.set_child(self.backup_group)
+        new_grp = Adw.PreferencesGroup()
         snapshots = self.grub_manager.backup.list_snapshots_with_meta()
         if not snapshots:
-            self.backup_group.add(Adw.ActionRow(title=self.tr("no_backups_yet")))
-            return
-        for snap in snapshots:
-            row = Adw.ActionRow(title=snap["date"])
-            row.set_icon_name("document-open-recent-symbolic")
-            restore_btn = Gtk.Button(label=self.tr("restore"))
-            restore_btn.set_valign(Gtk.Align.CENTER)
-            restore_btn.add_css_class("destructive-action")
-            restore_btn.connect("clicked", self._on_restore_specific, snap["name"])
-            row.add_suffix(restore_btn)
-            self.backup_group.add(row)
+            new_grp.add(Adw.ActionRow(title=self.tr("no_backups_yet")))
+        else:
+            for snap in snapshots:
+                row = Adw.ActionRow(title=snap["date"])
+                row.set_icon_name("document-open-recent-symbolic")
+                restore_btn = Gtk.Button(label=self.tr("restore"))
+                restore_btn.set_valign(Gtk.Align.CENTER)
+                restore_btn.add_css_class("destructive-action")
+                restore_btn.connect("clicked", self._on_restore_specific, snap["name"])
+                row.add_suffix(restore_btn)
+                new_grp.add(row)
+
+        if hasattr(self, 'backup_group_container'):
+            self.backup_group_container.set_child(new_grp)
+        self.backup_group = new_grp
 
     def _on_restore_specific(self, btn, snapshot_name):
         self._run_privileged_action(
@@ -839,7 +843,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         if not pw:
             self.show_message(self.tr("error"), self.tr("please_provide_password"))
             return
-        import json, tempfile, pathlib
+        import json, tempfile
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tf:
             json.dump({'password': pw}, tf)
             pw_file = tf.name
@@ -867,8 +871,6 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         dialog.connect("response", lambda d, r: d.destroy())
         dialog.present()
 
-
-
     def on_save_grub(self, btn):
         config = {
             "GRUB_DEFAULT": self.default_entry.get_text(),
@@ -878,7 +880,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         }
         if self.safe_mode_switch.get_active() and "nomodeset" not in config["GRUB_CMDLINE_LINUX_DEFAULT"]:
             config["GRUB_CMDLINE_LINUX_DEFAULT"] += " nomodeset"
-            
+
         cfg_repr = repr(config)
         self._run_privileged_action(
             f"from puls_kernel_mgr.core.grub import GrubManager; m=GrubManager(); m.write_advanced_config({cfg_repr})",
@@ -898,57 +900,150 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         )
 
     def load_kernels(self):
-        try:
-            kernels = self.kernel_manager.fetch_available_kernels()
-            for series, versions in kernels.items():
-                exp_title = series if ("Zen" in series or "Prebuilt" in series) else f"Series {series}"
-                expander = Adw.ExpanderRow(title=exp_title)
+        while child := self.mainline_box.get_first_child():
+            self.mainline_box.remove(child)
+        while child := self.zen_box.get_first_child():
+            self.zen_box.remove(child)
+        while child := self.prebuilt_box.get_first_child():
+            self.prebuilt_box.remove(child)
+
+        loading_grp = Adw.PreferencesGroup()
+        spin_row = Adw.ActionRow(title=self.tr("loading_dots"))
+        spinner = Gtk.Spinner()
+        spinner.start()
+        spin_row.add_prefix(spinner)
+        loading_grp.add(spin_row)
+        self.mainline_box.append(loading_grp)
+
+        def _bg_fetch():
+            try:
+                kernels = self.kernel_manager.fetch_available_kernels()
+            except Exception as exc:
+                kernels = exc
+            GLib.idle_add(self._apply_loaded_kernels, kernels)
+
+        threading.Thread(target=_bg_fetch, daemon=True).start()
+        return False
+
+    def _apply_loaded_kernels(self, kernels):
+        while child := self.mainline_box.get_first_child():
+            self.mainline_box.remove(child)
+        while child := self.zen_box.get_first_child():
+            self.zen_box.remove(child)
+        while child := self.prebuilt_box.get_first_child():
+            self.prebuilt_box.remove(child)
+
+        if isinstance(kernels, Exception):
+            err_group = Adw.PreferencesGroup()
+            err_group.add(Adw.ActionRow(title=self.tr("error_loading_kernels", e=str(kernels))))
+            self.mainline_box.append(err_group)
+            return False
+
+        mainline_grp = Adw.PreferencesGroup()
+        zen_grp = Adw.PreferencesGroup()
+        prebuilt_grp = Adw.PreferencesGroup()
+
+        has_zen = False
+        has_prebuilt = False
+        has_mainline = False
+
+        for series, versions in kernels.items():
+            if "Zen" in series:
+                has_zen = True
+                for k_info in versions:
+                    v_str = k_info.get("version", "Unknown")
+                    row = Adw.ActionRow(title=f"Linux-Zen {v_str}")
+                    btn = Gtk.Button(label=self.tr("compile_and_install"))
+                    btn.set_valign(Gtk.Align.CENTER)
+                    btn.add_css_class("suggested-action")
+                    btn.connect("clicked", self.on_install_kernel, k_info)
+                    row.add_suffix(btn)
+                    zen_grp.add(row)
+            elif "Prebuilt" in series:
+                pass
+            else:
+                has_mainline = True
+                expander = Adw.ExpanderRow(title=f"Series {series}")
                 for k_info in versions:
                     v_str = k_info.get("version", "Unknown")
                     moniker = k_info.get("moniker", "")
                     iseol = k_info.get("iseol", False)
-                    k_type = k_info.get("kernel_type", "mainline")
                     title = f"{v_str} [{moniker.upper()}]"
                     if iseol:
                         title += " (EOL)"
                     row = Adw.ActionRow(title=title)
-                    btn_label = "Install DEB" if k_type == "prebuilt" else self.tr("compile_and_install")
-                    btn = Gtk.Button(label=btn_label)
+                    btn = Gtk.Button(label=self.tr("compile_and_install"))
                     btn.set_valign(Gtk.Align.CENTER)
                     btn.add_css_class("suggested-action")
                     btn.connect("clicked", self.on_install_kernel, k_info)
                     row.add_suffix(btn)
                     expander.add_row(row)
-                self.kernels_group.add(expander)
-        except Exception as e:
-            self.kernels_group.add(Adw.ActionRow(title=self.tr("error_loading_kernels", e=e)))
+                mainline_grp.add(expander)
+
+        # Group prebuilt kernels by moniker into expander rows
+        prebuilt_items = kernels.get("Prebuilt DEB (prebuiltkernels.com)", [])
+        prebuilt_by_moniker = {}
+        for k_info in prebuilt_items:
+            mon = k_info.get("moniker", "prebuilt").capitalize()
+            if mon not in prebuilt_by_moniker:
+                prebuilt_by_moniker[mon] = []
+            if len(prebuilt_by_moniker[mon]) < 10:
+                prebuilt_by_moniker[mon].append(k_info)
+
+        for mon, p_list in prebuilt_by_moniker.items():
+            has_prebuilt = True
+            p_expander = Adw.ExpanderRow(title=f"Prebuilt {mon} ({len(p_list)} builds)")
+            for k_info in p_list:
+                v_str = k_info.get("version", "Unknown")
+                iseol = k_info.get("iseol", False)
+                title = f"Linux {v_str}"
+                if iseol:
+                    title += " (EOL)"
+                row = Adw.ActionRow(title=title)
+                btn = Gtk.Button(label="Install DEB")
+                btn.set_valign(Gtk.Align.CENTER)
+                btn.add_css_class("suggested-action")
+                btn.connect("clicked", self.on_install_kernel, k_info)
+                row.add_suffix(btn)
+                p_expander.add_row(row)
+            prebuilt_grp.add(p_expander)
+
+        if has_mainline:
+            self.mainline_box.append(mainline_grp)
+        if has_zen:
+            self.zen_box.append(zen_grp)
+        if has_prebuilt:
+            self.prebuilt_box.append(prebuilt_grp)
+
         return False
 
     def _refresh_installed_kernels(self):
-        if hasattr(self, 'installed_clamp'):
-            self.installed_kernels_group = Adw.PreferencesGroup()
-            self.installed_clamp.set_child(self.installed_kernels_group)
+        new_grp = Adw.PreferencesGroup()
         running = os.uname().release
         installed = self.kernel_manager.get_installed_kernels()
         if not installed:
-            self.installed_kernels_group.add(Adw.ActionRow(title=self.tr("no_local_kernels")))
-            return
-        for k in installed:
-            is_running = (k == running)
-            row = Adw.ActionRow(title=f"Linux {k}")
-            row.set_icon_name("drive-harddisk-system-symbolic")
-            if is_running:
-                row.set_subtitle(self.tr("currently_running"))
-                chip = Gtk.Label(label=self.tr("active"))
-                chip.add_css_class("success")
-                row.add_suffix(chip)
-            else:
-                rm_btn = Gtk.Button(label=self.tr("remove"))
-                rm_btn.set_valign(Gtk.Align.CENTER)
-                rm_btn.add_css_class("destructive-action")
-                rm_btn.connect("clicked", self.on_remove_kernel, k)
-                row.add_suffix(rm_btn)
-            self.installed_kernels_group.add(row)
+            new_grp.add(Adw.ActionRow(title=self.tr("no_local_kernels")))
+        else:
+            for k in installed:
+                is_running = (k == running)
+                row = Adw.ActionRow(title=f"Linux {k}")
+                row.set_icon_name("drive-harddisk-system-symbolic")
+                if is_running:
+                    row.set_subtitle(self.tr("currently_running"))
+                    chip = Gtk.Label(label=self.tr("active"))
+                    chip.add_css_class("success")
+                    row.add_suffix(chip)
+                else:
+                    rm_btn = Gtk.Button(label=self.tr("remove"))
+                    rm_btn.set_valign(Gtk.Align.CENTER)
+                    rm_btn.add_css_class("destructive-action")
+                    rm_btn.connect("clicked", self.on_remove_kernel, k)
+                    row.add_suffix(rm_btn)
+                new_grp.add(row)
+
+        if hasattr(self, 'installed_kernels_container'):
+            self.installed_kernels_container.set_child(new_grp)
+        self.installed_kernels_group = new_grp
 
     def on_remove_kernel(self, btn, version):
         dialog = Adw.MessageDialog(
@@ -970,6 +1065,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
             d.destroy()
         dialog.connect("response", on_response)
         dialog.present()
+
 
 class KernelManagerApp(Adw.Application):
     def __init__(self, **kwargs):
@@ -1045,37 +1141,7 @@ class KernelManagerApp(Adw.Application):
         outer.append(btn_box)
         win.set_content(outer)
         win.present()
-        
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
-        box.set_margin_top(24)
-        box.set_margin_bottom(24)
-        box.set_margin_start(24)
-        box.set_margin_end(24)
-        win.set_content(box)
-        lbl_title = Gtk.Label(label=tr("system_security_stability_warning"))
-        lbl_title.add_css_class("title-2")
-        box.append(lbl_title)
-        lbl_desc = Gtk.Label(label=tr("warning_desc2"))
-        lbl_desc.set_wrap(True)
-        lbl_desc.set_justify(Gtk.Justification.CENTER)
-        box.append(lbl_desc)
-        btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        btn_box.set_halign(Gtk.Align.CENTER)
-        btn_cancel = Gtk.Button(label=tr("cancel"))
-        btn_cancel.connect("clicked", lambda b: self.quit())
-        btn_box.append(btn_cancel)
-        btn_continue = Gtk.Button(label=tr("understand_continue"))
-        btn_continue.add_css_class("suggested-action")
-        def on_continue_clicked(b):
-            win.destroy()
-            main_win = KernelManagerWindow(application=self)
-            main_win.present()
-                
-        btn_continue.connect("clicked", on_continue_clicked)
-        btn_box.append(btn_continue)
-        
-        box.append(btn_box)
-        win.present()
+
 
 def main():
     GLib.set_application_name("PULS Kernel/GRUB Manager")
