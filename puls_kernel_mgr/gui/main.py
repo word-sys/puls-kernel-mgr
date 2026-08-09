@@ -1069,8 +1069,14 @@ class KernelManagerWindow(Adw.ApplicationWindow):
 
 class KernelManagerApp(Adw.Application):
     def __init__(self, **kwargs):
-        super().__init__(application_id='com.puls.kernelmgr', **kwargs)
+        super().__init__(
+            application_id='com.puls.kernelmgr',
+            flags=Gio.ApplicationFlags.NON_UNIQUE,
+            **kwargs
+        )
         Gtk.Window.set_default_icon_name("puls-k_icon")
+        self.main_window = None
+        self.warning_window = None
 
     def do_activate(self):
         self.show_pre_launch_warning()
@@ -1085,15 +1091,15 @@ class KernelManagerApp(Adw.Application):
         try:
             prefs = json.loads(prefs_file.read_text())
             if prefs.get("skip_warning"):
-                main_win = KernelManagerWindow(application=self)
-                main_win.present()
+                self.main_window = KernelManagerWindow(application=self)
+                self.main_window.present()
                 return
         except Exception:
             pass
 
-        win = Adw.ApplicationWindow(application=self)
-        win.set_title(tr("app_title"))
-        win.set_default_size(480, 340)
+        self.warning_window = Adw.ApplicationWindow(application=self)
+        self.warning_window.set_title(tr("app_title"))
+        self.warning_window.set_default_size(480, 340)
 
         status = Adw.StatusPage()
         status.set_icon_name("dialog-warning-symbolic")
@@ -1124,8 +1130,11 @@ class KernelManagerApp(Adw.Application):
                     prefs_file.write_text(json.dumps(prefs))
                 except Exception:
                     pass
-            win.destroy()
-            KernelManagerWindow(application=self).present()
+            if self.warning_window:
+                self.warning_window.destroy()
+                self.warning_window = None
+            self.main_window = KernelManagerWindow(application=self)
+            self.main_window.present()
 
         btn_continue.connect("clicked", on_continue)
         btn_box.append(btn_cancel)
@@ -1139,8 +1148,8 @@ class KernelManagerApp(Adw.Application):
         outer.append(status)
         outer.append(skip_check)
         outer.append(btn_box)
-        win.set_content(outer)
-        win.present()
+        self.warning_window.set_content(outer)
+        self.warning_window.present()
 
 
 def main():
