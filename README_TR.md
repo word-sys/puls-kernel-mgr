@@ -17,7 +17,10 @@ PULS Kernel/GRUB Yöneticisi, sistemlerinin çekirdeği ve önyükleme süreci �
   <img src="https://raw.githubusercontent.com/word-sys/puls-kernel-mgr/main/screenshots/ss3.png" width="49%">
 </p>
 
-> **Durum:** Yoğun geliştirme aşamasında — pürüzlü kenarlar, hatalar ve sorunlar bekleniyor; ama çalışıyor!
+> **Durum:** Yoğun geliştirme aşamasında — pürüzler ve hatalar olabilir, ancak çalışıyor!
+
+> [!WARNING]
+> **Sorumluluk Reddi & Yasal Uyarı**: Bu yazılım sistem çekirdeği dosyalarını ve GRUB önyükleme yapılandırmasını yönetir. GNU Genel Kamu Lisansı v3.0 kapsamında bu yazılım HERHANGİ BİR GARANTİ VERİLMEDEN dağıtılmaktadır. Geliştirici ve katkıda bulunanlar, olası sistem kararsızlıkları, önyükleme hataları veya veri kayıplarından sorumlu tutulamaz. Özel çekirdekler kurmadan önce sistem anlık görüntüsü (ör. Timeshift) almanız önerilir.
 
 ---
 
@@ -104,6 +107,14 @@ puls-kernel-mgr-gtk
 ```bash
 puls-kernel-mgr                            
 ```
+
+---
+
+## Teşekkürler & Kaynaklar
+
+- **[kernel.org](https://kernel.org)** — Ana hat Linux çekirdek kaynak arşivleri
+- **[zen-kernel](https://github.com/zen-kernel/zen-kernel)** — Linux-Zen performans yamaları
+- **[prebuiltkernels.com](https://prebuiltkernels.com)** — Derlenmiş hazır Debian/Ubuntu `.deb` çekirdek paketleri
 
 ---
 

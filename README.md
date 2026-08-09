@@ -21,6 +21,9 @@ PULS Kernel/GRUB Manager is a specialized tool for Linux users who need fine-gra
 
 > **Status:** Heavy development — expect rough edges, bugs and issues, but it works!
 
+> [!WARNING]
+> **Disclaimer & Limitation of Liability**: This software manages system kernel files and GRUB boot configuration. As provided under the GNU General Public License v3.0, this software is distributed WITHOUT ANY WARRANTY. The developer and contributors assume no liability for system instability, boot failures, hardware issues, or data loss. Always create a system snapshot (e.g., via Timeshift) before installing or modifying kernels.
+
 ---
 
 ## Features
@@ -106,6 +109,14 @@ puls-kernel-mgr-gtk
 ```bash
 puls-kernel-mgr                            
 ```
+
+---
+
+## Credits & Acknowledgements
+
+- **[kernel.org](https://kernel.org)** — Upstream Linux kernel source archives
+- **[zen-kernel](https://github.com/zen-kernel/zen-kernel)** — Linux-Zen performance tuning source patches
+- **[prebuiltkernels.com](https://prebuiltkernels.com)** — Pre-compiled Debian/Ubuntu `.deb` kernel builds
 
 ---
 
