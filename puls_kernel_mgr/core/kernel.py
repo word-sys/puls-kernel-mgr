@@ -5,14 +5,61 @@ from bs4 import BeautifulSoup
 import re
 import shutil
 import tempfile
+import glob
 
 
 class KernelManager:
     def __init__(self):
         self.download_dir = "/usr/src"
         self.mirror_base = "https://mirrors.edge.kernel.org/pub/linux/kernel/"
+        self.zen_repo_api = "https://api.github.com/repos/zen-kernel/zen-kernel/tags"
+        self.prebuilt_api = "https://prebuiltkernels.com/api/v1/kernels.json"
 
+    def fetch_zen_kernels(self):
+        """Fetch available Linux-Zen kernel releases."""
+        zen_kernels = []
+        try:
+            resp = requests.get(self.zen_repo_api, timeout=10)
+            if resp.status_code == 200:
+                tags = resp.json()
+                for t in tags[:15]:
+                    name = t.get("name", "")
+                    ver = name[1:] if name.startswith("v") else name
+                    tar_url = f"https://github.com/zen-kernel/zen-kernel/archive/refs/tags/{name}.tar.gz"
+                    zen_kernels.append({
+                        "version": ver,
+                        "moniker": "zen",
+                        "iseol": False,
+                        "source": tar_url,
+                        "pgp": None,
+                        "kernel_type": "zen",
+                    })
+            else:
+                print(f"Failed to fetch Linux-Zen kernels: HTTP {resp.status_code}")
+        except Exception as e:
+            print(f"Error fetching Linux-Zen kernels: {e}")
+        return zen_kernels
 
+    def fetch_prebuilt_kernels(self):
+        """Fetch prebuilt DEB kernel packages (e.g. prebuiltkernels.com)."""
+        prebuilt_kernels = []
+        try:
+            resp = requests.get(self.prebuilt_api, timeout=10)
+            if resp.status_code == 200:
+                data = resp.json()
+                for item in data.get("kernels", []):
+                    prebuilt_kernels.append({
+                        "version": item.get("version"),
+                        "moniker": "prebuilt",
+                        "iseol": False,
+                        "deb_urls": item.get("deb_urls", []),
+                        "kernel_type": "prebuilt",
+                    })
+            else:
+                print(f"Failed to fetch prebuilt kernels: HTTP {resp.status_code}")
+        except Exception as e:
+            print(f"Error fetching prebuilt kernels: {e}")
+        return prebuilt_kernels
 
     def fetch_available_kernels(self):
         kernels = {}
@@ -58,6 +105,7 @@ class KernelManager:
                                 "iseol": meta.get("iseol", False),
                                 "source": f"{self.mirror_base}{major}/linux-{full_version}.tar.xz",
                                 "pgp": f"{self.mirror_base}{major}/linux-{full_version}.tar.sign",
+                                "kernel_type": "mainline",
                             }
                             if not any(
                                 k["version"] == full_version for k in kernels[series]
@@ -96,11 +144,19 @@ class KernelManager:
                 versions.sort(key=v_sort, reverse=True)
                 filtered_kernels[series] = versions
 
+        # Add Linux-Zen category
+        zen_list = self.fetch_zen_kernels()
+        if zen_list:
+            filtered_kernels["Linux-Zen"] = zen_list
+
+        # Add Prebuilt DEB category
+        prebuilt_list = self.fetch_prebuilt_kernels()
+        if prebuilt_list:
+            filtered_kernels["Prebuilt DEB (prebuiltkernels.com)"] = prebuilt_list
+
         return filtered_kernels
 
     def get_installed_kernels(self):
-        import glob
-
         kernels = []
         for file in glob.glob("/boot/vmlinuz-*"):
             version = os.path.basename(file).replace("vmlinuz-", "")
@@ -117,16 +173,13 @@ class KernelManager:
 
         return sorted(kernels, key=version_key, reverse=True)
 
-
     def check_boot_space(self, required_mb=350):
         try:
             stat = shutil.disk_usage("/boot")
             free_mb = stat.free // (1024 * 1024)
             return free_mb >= required_mb, free_mb
         except Exception:
-            return True, -1 
-
-    
+            return True, -1
 
     def download_and_extract(self, version, source_url=None, pgp_url=None):
         if not source_url:
@@ -134,8 +187,9 @@ class KernelManager:
             source_url = f"{self.mirror_base}{major}/linux-{version}.tar.xz"
             pgp_url = f"{self.mirror_base}{major}/linux-{version}.tar.sign"
 
-        tarball_path = os.path.join(self.download_dir, f"linux-{version}.tar.xz")
-        sign_path = os.path.join(self.download_dir, f"linux-{version}.tar.sign")
+        ext = ".tar.gz" if source_url.endswith(".tar.gz") else ".tar.xz"
+        tarball_path = os.path.join(self.download_dir, f"kernel-{version}{ext}")
+        sign_path = os.path.join(self.download_dir, f"kernel-{version}.tar.sign")
 
         print(f"Downloading {source_url}...")
         try:
@@ -156,17 +210,17 @@ class KernelManager:
                                 end="",
                                 flush=True,
                             )
-            print()  # newline after progress
+            print()
         except Exception as e:
             print(f"Streaming download failed ({e}), falling back to wget...")
-            subprocess.run(["wget", "-q", "--show-progress", "-O", tarball_path, source_url], check=True)
-
-        if pgp_url:
-            print(f"Downloading signature...")
             subprocess.run(
-                ["wget", "-q", "-O", sign_path, pgp_url], check=True
+                ["wget", "-q", "--show-progress", "-O", tarball_path, source_url],
+                check=True,
             )
 
+        if pgp_url:
+            print("Downloading signature...")
+            subprocess.run(["wget", "-q", "-O", sign_path, pgp_url], check=True)
             print("Verifying GPG signature...")
             tar_path = tarball_path.replace(".xz", "")
             subprocess.run(["xz", "-d", "-k", tarball_path], check=True)
@@ -207,14 +261,56 @@ class KernelManager:
             )
             os.remove(tar_path)
         else:
-            print("Warning: No PGP signature URL. Skipping verification.")
-            print(f"Extracting {tarball_path}...")
+            print("Extracting kernel tarball...")
+            flag = "-xzvf" if ext == ".tar.gz" else "-xJf"
             subprocess.run(
-                ["tar", "-xJf", tarball_path, "-C", self.download_dir], check=True
+                ["tar", flag, tarball_path, "-C", self.download_dir], check=True
             )
 
-        return os.path.join(self.download_dir, f"linux-{version}")
+        target_dir = os.path.join(self.download_dir, f"linux-{version}")
+        if not os.path.exists(target_dir):
+            for entry in os.listdir(self.download_dir):
+                full_entry = os.path.join(self.download_dir, entry)
+                if os.path.isdir(full_entry) and (
+                    "linux" in entry.lower() or "zen" in entry.lower()
+                ):
+                    if entry != "linux-" + version:
+                        try:
+                            os.rename(full_entry, target_dir)
+                            break
+                        except Exception:
+                            target_dir = full_entry
+        return target_dir
 
+    def install_prebuilt_kernel(self, version, deb_urls):
+        if os.geteuid() != 0:
+            raise PermissionError("Root privileges required to install kernel packages.")
+
+        print(f"Downloading prebuilt kernel package(s) for version {version}...")
+        download_tmp = tempfile.mkdtemp(prefix="prebuilt_kernel_")
+        downloaded_debs = []
+        try:
+            for url in deb_urls:
+                fname = os.path.basename(url)
+                dest = os.path.join(download_tmp, fname)
+                print(f"Downloading {url}...")
+                subprocess.run(["wget", "-q", "--show-progress", "-O", dest, url], check=True)
+                downloaded_debs.append(dest)
+
+            if downloaded_debs:
+                print("Installing prebuilt DEB kernel package(s) via APT/dpkg...")
+                try:
+                    subprocess.run(["apt-get", "install", "-y"] + downloaded_debs, check=True)
+                except subprocess.CalledProcessError:
+                    subprocess.run(["dpkg", "-i"] + downloaded_debs, check=True)
+                    subprocess.run(["apt-get", "install", "-f", "-y"], check=True)
+
+                self.run_dkms(version)
+                print(f"Prebuilt kernel {version} installed successfully!")
+            else:
+                raise ValueError("No deb URLs provided or downloaded.")
+        finally:
+            shutil.rmtree(download_tmp, ignore_errors=True)
 
     def compile_and_install(self, version, use_menuconfig=False):
         if os.geteuid() != 0:
@@ -222,10 +318,17 @@ class KernelManager:
 
         source_url = None
         pgp_url = None
+        kernel_type = "mainline"
+        deb_urls = []
         if isinstance(version, dict):
             source_url = version.get("source")
             pgp_url = version.get("pgp")
+            kernel_type = version.get("kernel_type", "mainline")
+            deb_urls = version.get("deb_urls", [])
             version = version.get("version")
+
+        if kernel_type == "prebuilt" or deb_urls:
+            return self.install_prebuilt_kernel(version, deb_urls)
 
         ok, free_mb = self.check_boot_space()
         if not ok:
@@ -285,18 +388,51 @@ class KernelManager:
 
         env = kconf.set_reproducible_build_env()
         nproc = str(os.cpu_count() or 1)
-        print(f"Compiling kernel with {nproc} threads... This may take a while.")
-        subprocess.run(["make", "-j", nproc, "--load-average", str(float(nproc) * 1.5)], cwd=src_dir, env=env, check=True)
+        print(f"Building Debian (.deb) kernel packages with {nproc} threads using bindeb-pkg...")
+        try:
+            subprocess.run(
+                ["make", "-j", nproc, "bindeb-pkg"],
+                cwd=src_dir,
+                env=env,
+                check=True,
+            )
+        except subprocess.CalledProcessError:
+            print("bindeb-pkg failed, attempting with fakeroot...")
+            subprocess.run(
+                ["fakeroot", "make", "-j", nproc, "bindeb-pkg"],
+                cwd=src_dir,
+                env=env,
+                check=True,
+            )
 
-        print("Installing modules...")
-        subprocess.run(["make", "modules_install"], cwd=src_dir, env=env, check=True)
+        parent_dir = os.path.dirname(src_dir.rstrip("/"))
+        deb_files = glob.glob(os.path.join(parent_dir, "*.deb"))
+        target_debs = [
+            f
+            for f in deb_files
+            if ("linux-image-" in f or "linux-headers-" in f)
+        ]
 
-        print("Installing kernel...")
-        subprocess.run(["make", "install"], cwd=src_dir, env=env, check=True)
+        if not target_debs:
+            print(
+                "Warning: bindeb-pkg did not produce recognizable deb packages. "
+                "Falling back to standard make install..."
+            )
+            subprocess.run(["make", "modules_install"], cwd=src_dir, env=env, check=True)
+            subprocess.run(["make", "install"], cwd=src_dir, env=env, check=True)
+        else:
+            print(
+                f"Installing generated package(s): {[os.path.basename(d) for d in target_debs]} via APT/dpkg..."
+            )
+            try:
+                subprocess.run(["apt-get", "install", "-y"] + target_debs, check=True)
+            except subprocess.CalledProcessError:
+                print("apt-get install failed, installing via dpkg -i...")
+                subprocess.run(["dpkg", "-i"] + target_debs, check=True)
+                subprocess.run(["apt-get", "install", "-f", "-y"], check=True)
 
         self.run_dkms(version)
-        print("Kernel compilation and installation complete!")
-
+        print("Kernel compilation and package-managed installation complete!")
 
     def remove_kernel(self, version_string):
         if os.geteuid() != 0:
@@ -309,6 +445,45 @@ class KernelManager:
                 "Please boot into another kernel first."
             )
 
+        print(f"Searching for package-managed kernel matching version {version_string}...")
+        pkg_pattern = f"linux-image-*{version_string}*"
+        installed_pkgs = []
+        try:
+            res = subprocess.run(
+                ["dpkg-query", "-W", "-f=${Package}\n", pkg_pattern],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            installed_pkgs = [p.strip() for p in res.stdout.splitlines() if p.strip()]
+
+            res_hdr = subprocess.run(
+                [
+                    "dpkg-query",
+                    "-W",
+                    "-f=${Package}\n",
+                    f"linux-headers-*{version_string}*",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            installed_pkgs.extend(
+                [p.strip() for p in res_hdr.stdout.splitlines() if p.strip()]
+            )
+        except Exception as e:
+            print(f"Error querying dpkg: {e}")
+
+        if installed_pkgs:
+            print(f"Removing packages via APT: {', '.join(installed_pkgs)}...")
+            try:
+                subprocess.run(["apt-get", "purge", "-y"] + installed_pkgs, check=True)
+                print(f"Package-managed kernel {version_string} purged successfully!")
+                return
+            except subprocess.CalledProcessError as e:
+                print(f"apt-get purge error ({e}), performing fallback cleanup...")
+
+        print(f"Performing legacy file cleanup for un-packaged kernel {version_string}...")
         files_to_remove = [
             f"/boot/vmlinuz-{version_string}",
             f"/boot/initrd.img-{version_string}",
@@ -316,7 +491,6 @@ class KernelManager:
             f"/boot/System.map-{version_string}",
         ]
 
-        print(f"Removing kernel files for {version_string}...")
         for f in files_to_remove:
             if os.path.exists(f):
                 os.remove(f)
@@ -326,8 +500,7 @@ class KernelManager:
 
         mod_dir = f"/lib/modules/{version_string}"
         if os.path.isdir(mod_dir):
-            import shutil as _shutil
-            _shutil.rmtree(mod_dir)
+            shutil.rmtree(mod_dir)
             print(f"  Removed {mod_dir}")
 
         print("Updating GRUB...")
@@ -337,7 +510,6 @@ class KernelManager:
             print(f"Warning: update-grub failed: {e}")
 
         print(f"Kernel {version_string} removed successfully.")
-
 
     def run_dkms(self, kernel_version):
         try:

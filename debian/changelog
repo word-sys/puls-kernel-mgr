@@ -1,3 +1,12 @@
+puls-kernel-mgr (1.3.0) bookworm; urgency=medium
+
+  * Package-managed kernel builds via bindeb-pkg and apt/dpkg
+  * Add support for Linux-Zen kernels
+  * Support for prebuilt DEB kernel packages (prebuiltkernels.com)
+  * Kernel uninstallation via apt-get purge
+
+ -- Barın Güzeldemirci <baringuzeldemir@gmail.com>  Sun, 09 Aug 2026 15:00:00 +0300
+
 puls-kernel-mgr (1.2.0) bookworm; urgency=medium
 
   * Add Turkish language support

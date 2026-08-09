@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-08-09
+
+### Added
+- **Package-Managed Builds (`bindeb-pkg`)**: Kernel source builds are now compiled into native `.deb` packages via `bindeb-pkg` and installed through `apt`/`dpkg` to maintain system package database integrity.
+- **Linux-Zen Kernel Support**: Added support for fetching, compiling, and packaging Linux-Zen performance kernels.
+- **Prebuilt DEB Kernels**: Integrated support for fetching and installing pre-compiled `.deb` kernel packages (such as from `prebuiltkernels.com`).
+- **Package Purging**: Kernel uninstallation now uses `apt-get purge` to cleanly remove `.deb` packages and execute package manager hooks.
+
 ## [1.2.0] - 2026-07-20
 
 ### Added

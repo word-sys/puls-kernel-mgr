@@ -30,11 +30,14 @@ PULS Kernel/GRUB Yöneticisi, sistemlerinin çekirdeği ve önyükleme süreci �
 - Hızlı eylem düğmeleri: Anlık Görüntü Oluştur, Çekirdek Listesini Yenile
 
 ### Çekirdek Yönetimi
+- **Paket Yöneticili Derleme (`bindeb-pkg`)**: Çekirdek derlemelerini doğrudan `.deb` paketlerine dönüştürür ve sistem paket veritabanı bütünlüğünü korumak için `apt`/`dpkg` ile kurar.
 - **Ana Hat Getirme**: kernel.org'dan en güncel kararlı ve RC çekirdeklerini getirme
+- **Linux-Zen Desteği**: Performans odaklı Linux-Zen çekirdeklerini getirme, derleme, paketleme ve kurma
+- **Hazır DEB Çekirdekleri**: Önceden derlenmiş `.deb` çekirdek paketlerini indirme ve kurma (ör. `prebuiltkernels.com`)
 - **GPG Doğrulama**: Açmadan önce şifreli imza denetimi
 - **Özelleştirilmiş Derleme**: `localmodconfig` ile donanıma özgü, sade bir çekirdek oluşturma
 - **menuconfig Desteği**: Derlemeden önce isteğe bağlı etkileşimli çekirdek yapılandırması
-- **Çekirdek Kaldırma**: Kurulu çekirdekleri kaldırma (çalışan çekirdeğin kaldırılması engellenir)
+- **Paket Temizleme (Purge)**: Kurulu çekirdek paketlerini `apt-get purge` ile sistemden temizce kaldırma
 - **Otomatik DKMS**: Yeni çekirdekler için modülleri (ör. NVIDIA) yeniden derleme
 - **Bağımlılık Otomasyonu**: Derleme öncesinde gerekli tüm derleme araçlarını otomatik kurma
 
@@ -80,7 +83,7 @@ tar  wget  xz-utils  gpg  openssl  mokutil  dkms  librsvg2-common
 
 **Derleme araçları (ilk çalıştırmada otomatik kurulur):**
 ```
-build-essential  flex  bison  libncurses-dev  libssl-dev  libelf-dev  bc  rsync
+build-essential  flex  bison  libncurses-dev  libssl-dev  libelf-dev  bc  rsync  fakeroot  dpkg-dev  debhelper  kmod
 ```
 
 **İsteğe bağlı:**

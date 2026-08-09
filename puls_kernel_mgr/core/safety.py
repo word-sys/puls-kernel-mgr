@@ -16,6 +16,10 @@ class SafetyManager:
         "bc",
         "rsync",
         "wget",
+        "fakeroot",
+        "dpkg-dev",
+        "debhelper",
+        "kmod",
     ]
 
     _CMD_MAP = {
@@ -31,6 +35,10 @@ class SafetyManager:
         "bc":              "bc",
         "rsync":           "rsync",
         "wget":            "wget",
+        "fakeroot":        "fakeroot",
+        "dpkg-dev":        "dpkg-buildpackage",
+        "debhelper":       None,   # dpkg only
+        "kmod":            "kmod",
     }
 
     def __init__(self):

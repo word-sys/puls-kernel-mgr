@@ -32,11 +32,14 @@ PULS Kernel/GRUB Manager is a specialized tool for Linux users who need fine-gra
 - Quick-action buttons: Create Snapshot, Refresh Kernel List
 
 ### Kernel Management
+- **Package-Managed Builds (`bindeb-pkg`)**: Compiles kernel builds directly into `.deb` packages installed via `apt`/`dpkg` to maintain system package database integrity.
 - **Mainline Fetching**: Fetch latest stable and RC kernels from kernel.org
+- **Linux-Zen Support**: Fetch, compile, package, and install Linux-Zen performance-tuned kernels
+- **Prebuilt DEB Kernels**: Download and install pre-compiled `.deb` kernel packages (e.g. from `prebuiltkernels.com`)
 - **GPG Verification**: Cryptographic signature check before extraction
 - **Tailored Compilation**: `localmodconfig` creates a lean, hardware-specific kernel
 - **menuconfig Support**: Optional interactive kernel configuration before compiling
-- **Kernel Removal**: Remove installed kernels (blocks removing the running kernel)
+- **Package Purging**: Purge installed kernel packages cleanly via `apt-get purge`
 - **Automatic DKMS**: Rebuilds modules (e.g. NVIDIA) for new kernels
 - **Dependency Automation**: Installs all required build tools before compilation
 
@@ -82,7 +85,7 @@ tar  wget  xz-utils  gpg  openssl  mokutil  dkms  librsvg2-common
 
 **Build tools (auto-installed on first run):**
 ```
-build-essential  flex  bison  libncurses-dev  libssl-dev  libelf-dev  bc  rsync
+build-essential  flex  bison  libncurses-dev  libssl-dev  libelf-dev  bc  rsync  fakeroot  dpkg-dev  debhelper  kmod
 ```
 
 **Optional:**

@@ -265,10 +265,11 @@ def curses_main(stdscr):
                 k_opts = [
                     t("cli_view_installed"),
                     t("cli_compile_install"),
+                    t("cli_remove_local_kernel"),
                     t("back"),
                 ]
                 k_choice = interactive_menu(stdscr, t("cli_kernels_title"), k_opts)
-                if k_choice == 2:
+                if k_choice == 3:
                     break
                 elif k_choice == 0:
                     manager = KernelManager()
@@ -279,6 +280,28 @@ def curses_main(stdscr):
                         k_list = [f"Linux {k}" for k in installed]
                         k_list.append(t("back"))
                         interactive_menu(stdscr, t("cli_installed_kernels_title"), k_list)
+                elif k_choice == 2:
+                    manager = KernelManager()
+                    installed = manager.get_installed_kernels()
+                    if not installed:
+                        interactive_menu(stdscr, t("cli_installed_kernels_title"), [t("back")], {0: t("cli_no_custom_kernels")})
+                    else:
+                        k_list = [f"Linux {k}" for k in installed]
+                        k_list.append(t("back"))
+                        rem_idx = interactive_menu(stdscr, t("cli_remove_local_kernel"), k_list)
+                        if rem_idx < len(installed):
+                            target_ver = installed[rem_idx]
+                            curses.endwin()
+                            print(f"Removing kernel {target_ver}...")
+                            cmd = ["sudo", sys.executable, "-c", f"""
+import sys
+sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))}')
+from puls_kernel_mgr.core.kernel import KernelManager
+KernelManager().remove_kernel('{target_ver}')
+"""]
+                            subprocess.run(cmd)
+                            input(t("cli_press_enter_return"))
+                            stdscr.clear()
                 elif k_choice == 1:
                     stdscr.clear()
                     stdscr.addstr(1, 2, t("cli_fetching_upstream_kernels"), curses.A_BOLD)
@@ -297,7 +320,8 @@ def curses_main(stdscr):
                             for v in versions:
                                 v_str = v.get("version", "Unknown")
                                 moniker = v.get("moniker", "")
-                                label = f"{v_str} [{moniker.upper()}]"
+                                k_type = v.get("kernel_type", "mainline")
+                                label = f"[{series}] {v_str} [{moniker.upper()}]"
                                 if v.get("iseol", False):
                                     label += " (EOL)"
                                 flat_list.append(label)
@@ -311,12 +335,15 @@ def curses_main(stdscr):
 
                         version_dict = kernel_dicts[sel_idx]
                         version_str = version_dict.get("version")
+                        is_prebuilt = version_dict.get("kernel_type") == "prebuilt" or "deb_urls" in version_dict
 
                         make_default_choice = interactive_menu(stdscr, t("cli_set_as_default_prompt").format(version=version_str), [t("cli_yes"), t("cli_no")])
                         make_default = "y" if make_default_choice == 0 else "n"
 
-                        menuconfig_choice = interactive_menu(stdscr, t("cli_customize_kconfig_prompt"), [t("cli_yes"), t("cli_no_use_default")])
-                        use_menuconfig = (menuconfig_choice == 0)
+                        use_menuconfig = False
+                        if not is_prebuilt:
+                            menuconfig_choice = interactive_menu(stdscr, t("cli_customize_kconfig_prompt"), [t("cli_yes"), t("cli_no_use_default")])
+                            use_menuconfig = (menuconfig_choice == 0)
 
                         curses.endwin()
                         print(t("cli_proceeding_compile").format(version=version_str))

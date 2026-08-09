@@ -901,16 +901,19 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         try:
             kernels = self.kernel_manager.fetch_available_kernels()
             for series, versions in kernels.items():
-                expander = Adw.ExpanderRow(title=f"Series {series}")
+                exp_title = series if ("Zen" in series or "Prebuilt" in series) else f"Series {series}"
+                expander = Adw.ExpanderRow(title=exp_title)
                 for k_info in versions:
                     v_str = k_info.get("version", "Unknown")
                     moniker = k_info.get("moniker", "")
                     iseol = k_info.get("iseol", False)
+                    k_type = k_info.get("kernel_type", "mainline")
                     title = f"{v_str} [{moniker.upper()}]"
                     if iseol:
                         title += " (EOL)"
                     row = Adw.ActionRow(title=title)
-                    btn = Gtk.Button(label=self.tr("compile_and_install"))
+                    btn_label = "Install DEB" if k_type == "prebuilt" else self.tr("compile_and_install")
+                    btn = Gtk.Button(label=btn_label)
                     btn.set_valign(Gtk.Align.CENTER)
                     btn.add_css_class("suggested-action")
                     btn.connect("clicked", self.on_install_kernel, k_info)

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="puls-kernel-mgr",
-    version="1.2.0",
+    version="1.3.0",
     description="Linux Custom Kernel/GRUB Manager",
     author="Barın Güzeldemirci",
     author_email="baringuzeldemir@gmail.com",
