@@ -242,6 +242,12 @@ class KernelManager:
                 check=True,
             )
 
+        before_dirs = set(
+            os.path.join(self.download_dir, d)
+            for d in os.listdir(self.download_dir)
+            if os.path.isdir(os.path.join(self.download_dir, d))
+        )
+
         if pgp_url:
             print("Downloading signature...")
             subprocess.run(["wget", "-q", "-O", sign_path, pgp_url], check=True)
@@ -291,19 +297,27 @@ class KernelManager:
                 ["tar", flag, tarball_path, "-C", self.download_dir], check=True
             )
 
+        after_dirs = set(
+            os.path.join(self.download_dir, d)
+            for d in os.listdir(self.download_dir)
+            if os.path.isdir(os.path.join(self.download_dir, d))
+        )
+
+        new_dirs = list(after_dirs - before_dirs)
         target_dir = os.path.join(self.download_dir, f"linux-{version}")
-        if not os.path.exists(target_dir):
+
+        if new_dirs:
+            extracted_folder = new_dirs[0]
+            if extracted_folder != target_dir:
+                if os.path.exists(target_dir):
+                    shutil.rmtree(target_dir, ignore_errors=True)
+                os.rename(extracted_folder, target_dir)
+        elif not os.path.exists(target_dir):
             for entry in os.listdir(self.download_dir):
                 full_entry = os.path.join(self.download_dir, entry)
-                if os.path.isdir(full_entry) and (
-                    "linux" in entry.lower() or "zen" in entry.lower()
-                ):
-                    if entry != "linux-" + version:
-                        try:
-                            os.rename(full_entry, target_dir)
-                            break
-                        except Exception:
-                            target_dir = full_entry
+                if os.path.isdir(full_entry) and version in entry:
+                    target_dir = full_entry
+                    break
         return target_dir
 
     def install_prebuilt_kernel(self, version, deb_urls):
