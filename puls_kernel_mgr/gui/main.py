@@ -205,6 +205,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         self.mainline_label.set_label(self.tr("kernel_type_mainline"))
         self.zen_label.set_label(self.tr("kernel_type_zen"))
         self.prebuilt_label.set_label(self.tr("kernel_type_prebuilt"))
+        self.ubuntu_mainline_label.set_label(self.tr("kernel_type_ubuntu_mainline"))
         self.mc_row.set_title(self.tr("advanced_menuconfig"))
         self.mc_row.set_subtitle(self.tr("menuconfig_desc"))
         self._refresh_installed_kernels()
@@ -363,6 +364,15 @@ class KernelManagerWindow(Adw.ApplicationWindow):
 
         self.prebuilt_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         left_scroll_box.append(self.prebuilt_box)
+
+        self.ubuntu_mainline_label = Gtk.Label(label=self.tr("kernel_type_ubuntu_mainline"))
+        self.ubuntu_mainline_label.add_css_class("title-3")
+        self.ubuntu_mainline_label.set_margin_top(6)
+        self.ubuntu_mainline_label.set_halign(Gtk.Align.START)
+        left_scroll_box.append(self.ubuntu_mainline_label)
+
+        self.ubuntu_mainline_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        left_scroll_box.append(self.ubuntu_mainline_box)
 
         scroll_left = Gtk.ScrolledWindow()
         scroll_left.set_vexpand(True)
@@ -923,10 +933,24 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         vdict_repr = repr(version)
         v_str = version.get('version', '')
         use_mc = getattr(self, '_use_menuconfig', False)
+        is_prebuilt = (
+            version.get("kernel_type") in ("prebuilt", "ubuntu_mainline")
+            or bool(version.get("deb_urls"))
+        )
+        success_key = (
+            "kernel_prebuilt_installed_success"
+            if is_prebuilt
+            else "kernel_compile_installed_success"
+        )
+        title_key = (
+            "installing_prebuilt_kernel"
+            if is_prebuilt
+            else "compiling_installing_kernel"
+        )
         self._run_privileged_action(
             f"from puls_kernel_mgr.core.kernel import KernelManager; KernelManager().compile_and_install({vdict_repr}, use_menuconfig={use_mc})",
-            self.tr("kernel_compile_installed_success", v_str=v_str),
-            dialog_title=self.tr("compiling_installing_kernel", v_str=v_str),
+            self.tr(success_key, v_str=v_str),
+            dialog_title=self.tr(title_key, v_str=v_str),
             on_done=lambda: GLib.idle_add(self._refresh_installed_kernels),
         )
 
@@ -937,6 +961,8 @@ class KernelManagerWindow(Adw.ApplicationWindow):
             self.zen_box.remove(child)
         while child := self.prebuilt_box.get_first_child():
             self.prebuilt_box.remove(child)
+        while child := self.ubuntu_mainline_box.get_first_child():
+            self.ubuntu_mainline_box.remove(child)
 
         loading_grp = Adw.PreferencesGroup()
         spin_row = Adw.ActionRow(title=self.tr("loading_dots"))
@@ -963,6 +989,8 @@ class KernelManagerWindow(Adw.ApplicationWindow):
             self.zen_box.remove(child)
         while child := self.prebuilt_box.get_first_child():
             self.prebuilt_box.remove(child)
+        while child := self.ubuntu_mainline_box.get_first_child():
+            self.ubuntu_mainline_box.remove(child)
 
         if isinstance(kernels, Exception):
             err_group = Adw.PreferencesGroup()
@@ -973,10 +1001,12 @@ class KernelManagerWindow(Adw.ApplicationWindow):
         mainline_grp = Adw.PreferencesGroup()
         zen_grp = Adw.PreferencesGroup()
         prebuilt_grp = Adw.PreferencesGroup()
+        ubuntu_mainline_grp = Adw.PreferencesGroup()
 
         has_mainline = False
         has_zen = False
         has_prebuilt = False
+        has_ubuntu_mainline = False
 
         import re
         def _get_series(v_str):
@@ -992,8 +1022,14 @@ class KernelManagerWindow(Adw.ApplicationWindow):
             except Exception:
                 return [0, 0]
 
+        special_categories = (
+            "Linux-Zen",
+            "Prebuilt DEB (prebuiltkernels.com)",
+            "Ubuntu Mainline DEB (kernel.ubuntu.com)",
+        )
+
         # 1. Mainline Linux Kernels (Grouped by series in kernels dict)
-        for series in sorted([k for k in kernels if k not in ("Linux-Zen", "Prebuilt DEB (prebuiltkernels.com)")], key=_sort_key, reverse=True):
+        for series in sorted([k for k in kernels if k not in special_categories], key=_sort_key, reverse=True):
             versions = kernels[series]
             has_mainline = True
             expander = Adw.ExpanderRow(title=f"Series {series}")
@@ -1037,7 +1073,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
                 expander.add_row(row)
             zen_grp.add(expander)
 
-        # 3. Prebuilt DEB Kernels (Grouped by Series)
+        # 3. Prebuilt DEB Kernels (prebuiltkernels.com, Grouped by Series)
         prebuilt_items = kernels.get("Prebuilt DEB (prebuiltkernels.com)", [])
         prebuilt_by_series = {}
         for k_info in prebuilt_items:
@@ -1058,7 +1094,7 @@ class KernelManagerWindow(Adw.ApplicationWindow):
                 if iseol:
                     title += " (EOL)"
                 row = Adw.ActionRow(title=title)
-                btn = Gtk.Button(label="Install DEB")
+                btn = Gtk.Button(label=self.tr("install_deb"))
                 btn.set_valign(Gtk.Align.CENTER)
                 btn.add_css_class("suggested-action")
                 btn.connect("clicked", self.on_install_kernel, k_info)
@@ -1066,12 +1102,43 @@ class KernelManagerWindow(Adw.ApplicationWindow):
                 expander.add_row(row)
             prebuilt_grp.add(expander)
 
+        # 4. Ubuntu Mainline DEB Kernels (kernel.ubuntu.com/mainline/, Grouped by Series)
+        ubuntu_items = kernels.get("Ubuntu Mainline DEB (kernel.ubuntu.com)", [])
+        ubuntu_by_series = {}
+        for k_info in ubuntu_items:
+            s = _get_series(k_info.get("version", ""))
+            if s not in ubuntu_by_series:
+                ubuntu_by_series[s] = []
+            ubuntu_by_series[s].append(k_info)
+
+        for s in sorted(ubuntu_by_series.keys(), key=_sort_key, reverse=True):
+            versions = ubuntu_by_series[s]
+            has_ubuntu_mainline = True
+            expander = Adw.ExpanderRow(title=f"Series {s} (Ubuntu Mainline)")
+            for k_info in versions:
+                v_str = k_info.get("version", "Unknown")
+                moniker = k_info.get("moniker", "")
+                iseol = k_info.get("iseol", False)
+                title = f"Ubuntu Mainline {v_str} [{moniker.upper()}]"
+                if iseol:
+                    title += " (EOL)"
+                row = Adw.ActionRow(title=title)
+                btn = Gtk.Button(label=self.tr("install_deb"))
+                btn.set_valign(Gtk.Align.CENTER)
+                btn.add_css_class("suggested-action")
+                btn.connect("clicked", self.on_install_kernel, k_info)
+                row.add_suffix(btn)
+                expander.add_row(row)
+            ubuntu_mainline_grp.add(expander)
+
         if has_mainline:
             self.mainline_box.append(mainline_grp)
         if has_zen:
             self.zen_box.append(zen_grp)
         if has_prebuilt:
             self.prebuilt_box.append(prebuilt_grp)
+        if has_ubuntu_mainline:
+            self.ubuntu_mainline_box.append(ubuntu_mainline_grp)
 
         return False
 

@@ -38,7 +38,7 @@ PULS Kernel/GRUB Manager is a specialized tool for Linux users who need fine-gra
 - **Package-Managed Builds (`bindeb-pkg`)**: Compiles kernel builds directly into `.deb` packages installed via `apt`/`dpkg` to maintain system package database integrity.
 - **Mainline Fetching**: Fetch latest stable and RC kernels from kernel.org
 - **Linux-Zen Support**: Fetch, compile, package, and install Linux-Zen performance-tuned kernels
-- **Prebuilt DEB Kernels**: Download and install pre-compiled `.deb` kernel packages (e.g. from `prebuiltkernels.com`)
+- **Prebuilt DEB Kernels**: Download and install pre-compiled `.deb` kernel packages from `prebuiltkernels.com` and Ubuntu Mainline (`kernel.ubuntu.com/mainline/`) with SHA-256 checksum verification
 - **GPG Verification**: Cryptographic signature check before extraction
 - **Tailored Compilation**: `localmodconfig` creates a lean, hardware-specific kernel
 - **menuconfig Support**: Optional interactive kernel configuration before compiling
@@ -117,6 +117,7 @@ puls-kernel-mgr
 - **[kernel.org](https://kernel.org)** — Upstream Linux kernel source archives
 - **[zen-kernel](https://github.com/zen-kernel/zen-kernel)** — Linux-Zen performance tuning source patches
 - **[prebuiltkernels.com](https://prebuiltkernels.com)** — Pre-compiled Debian/Ubuntu `.deb` kernel builds
+- **[kernel.ubuntu.com/mainline](https://kernel.ubuntu.com/mainline/)** — Official Ubuntu Mainline Kernel PPA `.deb` builds
 
 ---
 

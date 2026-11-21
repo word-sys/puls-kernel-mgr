@@ -335,7 +335,10 @@ KernelManager().remove_kernel('{target_ver}')
 
                         version_dict = kernel_dicts[sel_idx]
                         version_str = version_dict.get("version")
-                        is_prebuilt = version_dict.get("kernel_type") == "prebuilt" or "deb_urls" in version_dict
+                        is_prebuilt = (
+                            version_dict.get("kernel_type") in ("prebuilt", "ubuntu_mainline")
+                            or "deb_urls" in version_dict
+                        )
 
                         make_default_choice = interactive_menu(stdscr, t("cli_set_as_default_prompt").format(version=version_str), [t("cli_yes"), t("cli_no")])
                         make_default = "y" if make_default_choice == 0 else "n"
@@ -346,7 +349,10 @@ KernelManager().remove_kernel('{target_ver}')
                             use_menuconfig = (menuconfig_choice == 0)
 
                         curses.endwin()
-                        print(t("cli_proceeding_compile").format(version=version_str))
+                        if is_prebuilt:
+                            print(t("cli_proceeding_install_prebuilt").format(version=version_str))
+                        else:
+                            print(t("cli_proceeding_compile").format(version=version_str))
 
                         vdict_repr = repr(version_dict)
                         cmd = ["sudo", sys.executable, "-c", f"""

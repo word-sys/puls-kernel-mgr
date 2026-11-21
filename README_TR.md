@@ -36,7 +36,7 @@ PULS Kernel/GRUB Yöneticisi, sistemlerinin çekirdeği ve önyükleme süreci �
 - **Paket Yöneticili Derleme (`bindeb-pkg`)**: Çekirdek derlemelerini doğrudan `.deb` paketlerine dönüştürür ve sistem paket veritabanı bütünlüğünü korumak için `apt`/`dpkg` ile kurar.
 - **Ana Hat Getirme**: kernel.org'dan en güncel kararlı ve RC çekirdeklerini getirme
 - **Linux-Zen Desteği**: Performans odaklı Linux-Zen çekirdeklerini getirme, derleme, paketleme ve kurma
-- **Hazır DEB Çekirdekleri**: Önceden derlenmiş `.deb` çekirdek paketlerini indirme ve kurma (ör. `prebuiltkernels.com`)
+- **Hazır DEB Çekirdekleri**: `prebuiltkernels.com` ve Ubuntu Ana Hat (`kernel.ubuntu.com/mainline/`) depolarından önceden derlenmiş `.deb` çekirdek paketlerini SHA-256 doğrulamasıyla indirme ve kurma
 - **GPG Doğrulama**: Açmadan önce şifreli imza denetimi
 - **Özelleştirilmiş Derleme**: `localmodconfig` ile donanıma özgü, sade bir çekirdek oluşturma
 - **menuconfig Desteği**: Derlemeden önce isteğe bağlı etkileşimli çekirdek yapılandırması
@@ -115,6 +115,7 @@ puls-kernel-mgr
 - **[kernel.org](https://kernel.org)** — Ana hat Linux çekirdek kaynak arşivleri
 - **[zen-kernel](https://github.com/zen-kernel/zen-kernel)** — Linux-Zen performans yamaları
 - **[prebuiltkernels.com](https://prebuiltkernels.com)** — Derlenmiş hazır Debian/Ubuntu `.deb` çekirdek paketleri
+- **[kernel.ubuntu.com/mainline](https://kernel.ubuntu.com/mainline/)** — Resmi Ubuntu Ana Hat (Mainline) `.deb` çekirdek paketleri
 
 ---
 
