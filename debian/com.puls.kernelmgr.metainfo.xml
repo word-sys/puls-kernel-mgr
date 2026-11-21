@@ -16,6 +16,8 @@
     <p>Features include:</p>
     <ul>
       <li>Mainline kernel fetching from kernel.org with GPG signature verification</li>
+      <li>Linux-Zen performance kernel support</li>
+      <li>Prebuilt .deb kernel installation from prebuiltkernels.com and Ubuntu Mainline (kernel.ubuntu.com/mainline/) with SHA-256 verification</li>
       <li>Tailored compilation using localmodconfig for lean, hardware-specific kernels</li>
       <li>Automatic DKMS rebuild for third-party modules (e.g. NVIDIA drivers)</li>
       <li>GRUB parameter tuning and visual boot order management</li>
@@ -62,6 +64,17 @@
   </requires>
 
   <releases>
+    <release version="1.3.1" date="2026-11-21">
+      <description>
+        <p>Ubuntu Mainline prebuilt DEB kernel support and prebuilt installer improvements:</p>
+        <ul>
+          <li>Added Ubuntu Mainline prebuilt .deb kernel support from kernel.ubuntu.com/mainline/</li>
+          <li>Automatic host architecture detection and SHA-256 CHECKSUMS verification</li>
+          <li>Improved prebuilt kernel installation fallback, DKMS targeting, and package purging</li>
+          <li>Fixed semantic version ordering for release candidate (-rc) kernels</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.3.0" date="2026-08-09">
       <description>
         <p>Package-managed kernel support and Linux-Zen release:</p>

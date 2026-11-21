@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-11-21
+
+### Added
+- **Ubuntu Mainline DEB Kernels**: Added support for browsing, downloading, and installing pre-compiled `.deb` kernel packages directly from Ubuntu's Mainline Kernel PPA (`https://kernel.ubuntu.com/mainline/`) in both the GUI and CLI.
+- **Automatic Architecture Detection & Checksum Verification**: Automatically detects the host Debian architecture (`dpkg --print-architecture`), resolves the matching `generic` flavor packages (including shared `_all.deb` headers across architectures), and verifies downloaded `.deb` files against Ubuntu's official `CHECKSUMS` SHA-256 hashes before installation.
+
+### Improved
+- **Prebuilt Kernel Installation & DKMS**: Added `/boot` free-space checks, graceful fallback to kernel image + modules if Ubuntu headers hit library dependency mismatches on Debian/older Ubuntu releases, accurate DKMS targeting for the newly installed kernel release string, and dedicated download/install dialog titles for prebuilt `.deb` packages.
+- **Ubuntu Mainline Kernel Removal**: `remove_kernel()` now also purges `linux-modules-*` packages and orphaned shared `_all` `linux-headers-*` packages cleanly via `apt-get purge`.
+- **Semantic Kernel Version Sorting**: Properly orders release candidates below final releases (e.g. `7.3.5 > 7.3 > 7.3-rc7`).
+
 ## [1.3.0] - 2026-08-09
 
 ### Added

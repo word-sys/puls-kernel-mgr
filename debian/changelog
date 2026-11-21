@@ -1,3 +1,13 @@
+puls-kernel-mgr (1.3.1) bookworm; urgency=medium
+
+  * Add Ubuntu Mainline prebuilt DEB kernel support (kernel.ubuntu.com/mainline/)
+  * Automatic architecture detection and SHA-256 CHECKSUMS verification for Ubuntu Mainline packages
+  * Improve prebuilt DEB install fallback, DKMS kernel detection, and GUI/CLI labels
+  * Purge linux-modules-* and orphaned shared _all linux-headers-* packages on kernel removal
+  * Fix semantic version sorting for release candidate (-rc) kernels
+
+ -- Barın Güzeldemirci <baringuzeldemir@gmail.com>  Sat, 21 Nov 2026 12:50:00 +0300
+
 puls-kernel-mgr (1.3.0) bookworm; urgency=medium
 
   * Package-managed kernel builds via bindeb-pkg and apt/dpkg

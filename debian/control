@@ -35,6 +35,8 @@ Description: PULS Kernel/GRUB Manager
  .
  Features:
   - Mainline kernel fetching from kernel.org with GPG verification
+  - Linux-Zen performance kernel support
+  - Prebuilt DEB kernels from prebuiltkernels.com and Ubuntu Mainline
   - Tailored compilation using localmodconfig
   - Automatic DKMS rebuild for modules (e.g. NVIDIA drivers)
   - GRUB parameter tuning and boot order management
